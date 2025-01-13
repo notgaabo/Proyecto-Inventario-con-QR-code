@@ -1,0 +1,55 @@
+<!-- admin/statistics.html -->
+{% include 'includes/header.html' %}
+<h1>Statistics Overview</h1>
+
+<h2>Global Sales Statistics</h2>
+<p><strong>Total Sales:</strong> {{ global_stats.total_sales }}</p>
+<p><strong>Monthly Sales:</strong> {{ global_stats.monthly_sales }}</p>
+<p><strong>Quarterly Sales:</strong> {{ global_stats.quarterly_sales }}</p>
+<p><strong>Annual Sales:</strong> {{ global_stats.annual_sales }}</p>
+
+<h2>User Statistics</h2>
+<table>
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Total Purchases</th>
+            <th>Monthly Purchases</th>
+            <th>Quarterly Purchases</th>
+            <th>Annual Purchases</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.total_purchases }}</td>
+            <td>{{ user.monthly_purchases }}</td>
+            <td>{{ user.quarterly_purchases }}</td>
+            <td>{{ user.annual_purchases }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Graphical Statistics</h2>
+<div id="adminChart"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    var ctx = document.getElementById('adminChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Sales',
+                data: [10, 20, 30, 40, 50, 60],
+                backgroundColor: 'rgb(54, 162, 235)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1
+            }]
+        }
+    });
+</script>
+{% include 'includes/footer.html' %}

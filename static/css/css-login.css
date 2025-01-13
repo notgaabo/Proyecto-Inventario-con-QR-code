@@ -1,0 +1,59 @@
+/* Importa la fuente desde Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #1a1a1a;
+    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Aplicar la fuente a todo el cuerpo */
+}
+
+.container {
+    background-color: #ffff66;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.7);
+    text-align: center;
+    width: 300px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 700; /* Aplicar negrita al título */
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 700; /* Aplicar negrita a las etiquetas */
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif; /* Asegurar que la fuente se aplica a los inputs */
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif; /* Asegurar que la fuente se aplica al botón */
+}
+
+button:hover {
+    background-color: #555;
+}

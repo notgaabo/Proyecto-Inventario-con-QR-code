@@ -1,0 +1,40 @@
+<!-- templates/admin/dashboard.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin</title>
+</head>
+<body>
+    <h2>Bienvenido, Admin</h2>
+    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+
+    <h3>Usuarios</h3>
+    <a href="{{ url_for('crear_usuario') }}">Crear nuevo usuario</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in usuarios %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_usuario', user_id=user.id) }}">Editar</a>
+                        <a href="{{ url_for('eliminar_usuario_route', user_id=user.id) }}">Eliminar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

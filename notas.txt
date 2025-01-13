@@ -1,0 +1,57 @@
+PUNTO 1 STOCK DE PRODUCTOS
+
+si el producto es muy vendido debo notifiar al uuario cuando quede el 50%
+pero si el producto no es tan vendido 75% para darle la notificacion al 
+usuario ya que todo dependeria del volumen de venta y tambien tneer un maximo 
+de stock que ese se determinaria dependiendo el usuario
+
+PUNTO 2 NOTIFICACIONES
+
+debo identificar que tipo de notificaciones quiero por ahora quiero notificaciones 
+smtp o correo electrinico y de firebase para que sean en la misma plataforma
+
+PUNTO 3 Envío del Mensaje: 
+
+Integra la lógica de envío en el flujo de trabajo de tu aplicación
+para enviar notificaciones cuando se detecte un bajo nivel de stock.
+
+PUNTO 4  Panel de Administración: 
+
+Proporciona una interfaz donde los usuarios puedan configurar
+sus preferencias de notificación, como umbrales de stock y métodos de notificación preferidos.
+
+PUNTO 5 FLUJO DE trabajo
+
+quiero que mis codigos QR se generen cada vez q se necesiten sin guardarse localmente
+
+PUNTO 6 Procesamiento de Datos:
+
+Al escanear, dirige al usuario a una URL en tu aplicación que maneje 
+la lógica de lo que hacer con la información del QR (por ejemplo, mostrar detalles de una venta).
+
+PUNTO 7  Uso en Notificaciones y Reportes
+
+Enlace a Información Detallada: Incluye un enlace codificado que lleva a los usuarios a una página 
+detallada sobre el producto o venta.
+Verificación Rápida: Permite a los usuarios verificar rápidamente el estado de una venta o producto 
+mediante el escaneo del código QR.
+
+PUNTO 8 IA 
+
+para la implementacion puedo usar modelos de aprendizaje para la demanda futura de productos basandose 
+en la historia tendencias del mercado puedo usar bibliotecas como scikit-learn o tensorflow para entrenar
+modelos de prediccion con datos de la venta
+
+detencion de anomalias como patrones inusuales en el inventario, robos, errores de conteo o problemas de calidad
+para esto podemos usar isolation-forest o autoencoders 
+
+PUNTO 9 ASISTENTE VIRTUAL 
+
+Utilizar dialogflow, rasa o GPT 3 para crear un asistente convencional que se inrefre con tu plataforma de inventario
+
+8 ver GPT
+
+PUNTO 10 hashear las constrasenas
+
+Debo hashear las constrasenas para mayor seguridad en mi plataforma
+
