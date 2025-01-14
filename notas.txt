@@ -55,3 +55,9 @@ PUNTO 10 hashear las constrasenas
 
 Debo hashear las constrasenas para mayor seguridad en mi plataforma
 
+PUNTO 11 GENERACION DE QR PARA VENTAS A FUTURO
+
+debo generar QR con los productos que tengo registrados en mi almacen pueda digamos sacar el codigo QR pegarlo a la manzana
+y que al momento que llegue un usuario se registre en la factuera y hacer el pago
+
+codigo ingles y material icon theme extension

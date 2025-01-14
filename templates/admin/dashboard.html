@@ -1,40 +1,157 @@
-<!-- templates/admin/dashboard.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
     <title>Dashboard Admin</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        h2, h3 {
+            color: #333;
+            text-align: center;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Asegurar que el container no se solape con el header ni el sidebar */
+        .container {
+            width: 80%;
+            margin-left: 250px; /* Deja espacio para el sidebar */
+            padding: 20px;
+            margin-top: 60px; /* Agrega margen superior para que no se oculte el contenido por el header */
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        td a {
+            margin-right: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        .actions a {
+            margin-right: 5px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 3px;
+        }
+
+        .actions a:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h2>Bienvenido, Admin</h2>
-    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
 
-    <h3>Usuarios</h3>
-    <a href="{{ url_for('crear_usuario') }}">Crear nuevo usuario</a>
+    {% include 'includes/header.html' %}
+    
+    <!-- Sidebar -->
+    <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
+        <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+            <ul class="space-y-2 font-medium">
+                <li>
+                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
+                            <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
+                            <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
+                        </svg>
+                        <span class="ms-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('crear_usuario') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        <i class="fas fa-pencil-alt"></i><span class="ms-3">Crear usuario</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in usuarios %}
+    <!-- Main content -->
+    <div class="container">
+        <h2>Bienvenido, Admin</h2>
+        <h3>Usuarios</h3>
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.role }}</td>
-                    <td>
-                        <a href="{{ url_for('editar_usuario', user_id=user.id) }}">Editar</a>
-                        <a href="{{ url_for('eliminar_usuario_route', user_id=user.id) }}">Eliminar</a>
-                    </td>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Acciones</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for user in usuarios %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>
+                            <a href="{{ url_for('editar_usuario', user_id=user.id) }}" class="btn">Editar</a>
+                            <a href="{{ url_for('eliminar_usuario_route', user_id=user.id) }}" class="btn" style="background-color: #dc3545;">Eliminar</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </body>
 </html>

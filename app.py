@@ -19,7 +19,7 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return login_controller(request)
+    return login_controller()
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
@@ -27,11 +27,11 @@ def admin_dashboard():
 
 @app.route('/crear_usuario', methods=['GET', 'POST'])
 def crear_usuario():
-    return crear_usuario_controller(request)
+    return crear_usuario_controller()
 
 @app.route('/editar_usuario/<int:user_id>', methods=['GET', 'POST'])
 def editar_usuario(user_id):
-    return editar_usuario_controller(user_id, request)
+    return editar_usuario_controller(user_id)
 
 @app.route('/eliminar_usuario/<int:user_id>', methods=['GET'])
 def eliminar_usuario_route(user_id):
