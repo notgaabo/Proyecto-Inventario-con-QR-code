@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import timedelta
 from controllers.auth_controller import login_controller, logout_controller
-from controllers.user_controller import admin_dashboard_controller, crear_usuario_controller, editar_usuario_controller, eliminar_usuario_controller
+from controllers.user_controller import admin_dashboard_controller, create_user_controller, edit_user_controller, delete_user_controller
 from controllers.dashboard_controller import home_controller, statistics_controller
 import os
 
@@ -25,17 +25,17 @@ def login():
 def admin_dashboard():
     return admin_dashboard_controller()
 
-@app.route('/crear_usuario', methods=['GET', 'POST'])
-def crear_usuario():
-    return crear_usuario_controller()
+@app.route('/create_user', methods=['GET', 'POST'])
+def create_user():
+    return create_user_controller()
 
-@app.route('/editar_usuario/<int:user_id>', methods=['GET', 'POST'])
-def editar_usuario(user_id):
-    return editar_usuario_controller(user_id)
+@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+def edit_user(user_id):
+    return edit_user_controller(user_id)
 
-@app.route('/eliminar_usuario/<int:user_id>', methods=['GET'])
-def eliminar_usuario_route(user_id):
-    return eliminar_usuario_controller(user_id)
+@app.route('/delete_user/<int:user_id>', methods=['GET'])
+def delete_user_route(user_id):
+    return delete_user_controller(user_id)
 
 @app.route('/statistics')
 def statistics():

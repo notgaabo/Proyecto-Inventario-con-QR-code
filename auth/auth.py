@@ -42,7 +42,7 @@ def logout_user():
     session.clear()  # Limpiar la sesión
 
 # Función para insertar un usuario (hasheando la contraseña)
-def insertar_usuario(username, password, role):
+def insert_user(username, password, role):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())  # Hasheando la contraseña
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -53,7 +53,7 @@ def insertar_usuario(username, password, role):
     connection.commit()
 
 # Función para obtener todos los usuarios
-def obtener_usuarios():
+def get_user():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users")
@@ -61,7 +61,7 @@ def obtener_usuarios():
     return usuarios
 
 # Función para actualizar los datos de un usuario
-def actualizar_usuario(user_id, username, password, role):
+def update_user(user_id, username, password, role):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())  # Hasheando la contraseña
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -73,7 +73,7 @@ def actualizar_usuario(user_id, username, password, role):
     connection.commit()
 
 # Función para eliminar un usuario
-def eliminar_usuario(user_id):
+def delete_user(user_id):
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))

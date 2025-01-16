@@ -6,6 +6,7 @@
   <title>Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body class="bg-gray-100">
 
@@ -55,6 +56,44 @@
       </main>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+  <script>
+        // Parsear los datos pasados desde Flask
+        var weeks = JSON.parse('{{ weeks | tojson }}');
+        var sales = JSON.parse('{{ sales | tojson }}');
+        var months = JSON.parse('{{ months | tojson }}');
+        var monthly_sales = JSON.parse('{{ monthly_sales | tojson }}');
+
+        // Crear gráfico de ventas semanales
+        var ctx1 = document.getElementById('chart1').getContext('2d');
+        var weeklyChart = new Chart(ctx1, {
+            type: 'line',  // Tipo de gráfico (lineal)
+            data: {
+                labels: weeks,  // Semanas
+                datasets: [{
+                    label: 'Ventas Semanales',
+                    data: sales,  // Datos de ventas
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false
+                }]
+            }
+        });
+
+        // Crear gráfico de ventas mensuales
+        var ctx2 = document.getElementById('chart2').getContext('2d');
+        var monthlyChart = new Chart(ctx2, {
+            type: 'bar',  // Tipo de gráfico (barras)
+            data: {
+                labels: months,  // Meses
+                datasets: [{
+                    label: 'Ventas Mensuales',
+                    data: monthly_sales,  // Datos de ventas mensuales
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            }
+        });
+    </script>
+
 </body>
 </html>

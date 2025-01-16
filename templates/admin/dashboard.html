@@ -116,7 +116,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('crear_usuario') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="{{ url_for('create_user') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                         <i class="fas fa-pencil-alt"></i><span class="ms-3">Crear usuario</span>
                     </a>
                 </li>
@@ -144,8 +144,8 @@
                         <td>{{ user.username }}</td>
                         <td>{{ user.role }}</td>
                         <td>
-                            <a href="{{ url_for('editar_usuario', user_id=user.id) }}" class="btn">Editar</a>
-                            <a href="{{ url_for('eliminar_usuario_route', user_id=user.id) }}" class="btn" style="background-color: #dc3545;">Eliminar</a>
+                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn">Editar</a>
+                            <a href="{{ url_for('delete_user_route', user_id=user.id) }}" class="btn" style="background-color: #dc3545;">Eliminar</a>
                         </td>
                     </tr>
                 {% endfor %}

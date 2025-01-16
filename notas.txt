@@ -1,7 +1,7 @@
 PUNTO 1 STOCK DE PRODUCTOS
 
-si el producto es muy vendido debo notifiar al uuario cuando quede el 50%
-pero si el producto no es tan vendido 75% para darle la notificacion al 
+si el producto es muy vendido debo notifiar al uuario cuando quede el 20-30%
+pero si el producto no es tan vendido 90-100% para darle la notificacion al 
 usuario ya que todo dependeria del volumen de venta y tambien tneer un maximo 
 de stock que ese se determinaria dependiendo el usuario
 
