@@ -1,49 +1,51 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, redirect, url_for, session
 from datetime import timedelta
-from controllers.auth_controller import login_controller, logout_controller
-from controllers.user_controller import admin_dashboard_controller, create_user_controller, edit_user_controller, delete_user_controller
-from controllers.dashboard_controller import home_controller, statistics_controller
 import os
+from controllers.auth_controller import AuthController
+from controllers.user_controller import UserController
+from controllers.dashboard_controller import HomeController, StatisticsController
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
-app.permanent_session_lifetime = timedelta(days=7)
+class InventoryApp(Flask):
+    def __init__(self):
+        super().__init__(__name__)
+        self.secret_key = os.urandom(24)
+        self.permanent_session_lifetime = timedelta(days=7)
+        self.before_request(self.check_user_status)  # Verificación antes de cada solicitud
+        self.register_error_handler(404, self.page_not_found)
+        self.register_error_handler(403, self.forbidden_error)  # Manejador de error 403
+        self.register_routes()
 
-@app.before_request
-def make_session_permanent():
-    session.permanent = True
+    def check_user_status(self):
+        """Verifica el estado del usuario antes de cada solicitud"""
+        session.permanent = True
+        if 'user' in session:
+            user = session['user']
+            if user.get('is_active') == 0:
+                # Si el usuario está deshabilitado, retorna el error 403
+                return self.forbidden_error(None)
 
-@app.route('/')
-def home():
-    return home_controller()
+    def page_not_found(self, e):
+        return render_template('errors/404.html'), 404
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    return login_controller()
+    def forbidden_error(self, e):
+        """Manejador global de error 403 para cuando el usuario no tiene acceso"""
+        return render_template('errors/403.html'), 403
 
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    return admin_dashboard_controller()
+    def register_routes(self):
+        self.add_url_rule('/', 'home', HomeController.home)
+        self.add_url_rule('/login', 'login', AuthController.login, methods=['GET', 'POST'])
+        self.add_url_rule('/admin', 'admin_dashboard', UserController.admin_dashboard)
+        self.add_url_rule('/create_user', 'create_user', UserController.create_user, methods=['GET', 'POST'])
+        self.add_url_rule('/edit_user/<int:user_id>', 'edit_user', UserController.edit_user, methods=['GET', 'POST'])
+        self.add_url_rule('/disable_user/<int:user_id>', 'disable_user', UserController.toggle_user_status, methods=['GET'])
+        self.add_url_rule('/enable_user/<int:user_id>', 'enable_user', UserController.enable_user, methods=['GET'])
+        self.add_url_rule('/statistics', 'statistics', StatisticsController.statistics)
+        self.add_url_rule('/logout', 'logout', AuthController.logout)
+        self.add_url_rule('/disabled_error', 'disabled_user_error', self.disabled_user_error)
 
-@app.route('/create_user', methods=['GET', 'POST'])
-def create_user():
-    return create_user_controller()
-
-@app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
-def edit_user(user_id):
-    return edit_user_controller(user_id)
-
-@app.route('/delete_user/<int:user_id>', methods=['GET'])
-def delete_user_route(user_id):
-    return delete_user_controller(user_id)
-
-@app.route('/statistics')
-def statistics():
-    return statistics_controller()
-
-@app.route('/logout')
-def logout():
-    return logout_controller()
+    def disabled_user_error(self):
+        """Página personalizada para usuarios deshabilitados"""
+        return render_template('errors/disabled_user.html'), 403
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    InventoryApp().run(debug=True)

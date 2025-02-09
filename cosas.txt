@@ -1,5 +1,0 @@
-hoy arregle mi codigo y lo adapte al ingles ya que algunas cosas estaban en espano, tambien le puse estilos
-al lugar donde el admin crea el usuario 
-
-hice tmb que se muestre el grafico del usuario donde tiene las ventas y el profit de ellas, tamvien 
-es posible que termine de hacer mi logo y ver que funcionalidades tengo

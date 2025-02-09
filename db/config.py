@@ -1,7 +1,11 @@
-# db/config.py
+import mysql.connector
 
 class Config:
-    MYSQL_HOST = 'localhost'
-    MYSQL_USER = 'root'
-    MYSQL_PASSWORD = 'yoensi1881'
-    MYSQL_DB = 'final_project'
+    @staticmethod
+    def get_db_connection():
+        return mysql.connector.connect(
+            user='root',
+            password='yoensi1881',
+            host='localhost',
+            database='final_project'
+        )

@@ -1,0 +1,147 @@
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+
+    h2, h3 {
+        color: #333;
+        text-align: center;
+    }
+
+    a {
+        text-decoration: none;
+        color: #007bff;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    /* Asegurar que el container no se solape con el header ni el sidebar */
+    .container {
+        width: 80%;
+        margin-left: 250px; /* Deja espacio para el sidebar */
+        padding: 20px;
+        margin-top: 60px; /* Agrega margen superior para que no se oculte el contenido por el header */
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f4f4f4;
+        color: #333;
+    }
+
+    td a {
+        margin-right: 10px;
+    }
+
+    .actions {
+        display: flex;
+        justify-content: center;
+    }
+
+    .actions a {
+        margin-right: 5px;
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 3px;
+    }
+
+    .actions a:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+    <!-- Contenedor Principal -->
+    <div class="p-6 bg-gray-100 min-h-screen ml-64 w-full">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Usuarios Activos</h2>
+        <div class="overflow-x-auto mt-4">
+            <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
+                <thead class="bg-blue-500 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
+                        <th class="px-6 py-3 text-left">Username</th>
+                        <th class="px-6 py-3 text-left">Role</th>
+                        <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300">
+                    {% for user in usuarios_activos %}
+                    <tr class="hover:bg-blue-100 transition duration-200">
+                        <td class="px-6 py-4">{{ user.id }}</td>
+                        <td class="px-6 py-4">{{ user.username }}</td>
+                        <td class="px-6 py-4">{{ user.role }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-700">Editar</a>
+                            <a href="{{ url_for('disable_user', user_id=user.id) }}" class="px-3 py-1 ml-2 text-sm text-white bg-yellow-500 rounded-lg hover:bg-yellow-600">Desactivar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white mt-8">Usuarios Deshabilitados</h2>
+        <div class="overflow-x-auto mt-4">
+            <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
+                <thead class="bg-red-500 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
+                        <th class="px-6 py-3 text-left">Username</th>
+                        <th class="px-6 py-3 text-left">Role</th>
+                        <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300">
+                    {% for user in usuarios_inactivos %}
+                    <tr class="hover:bg-red-100 transition duration-200">
+                        <td class="px-6 py-4">{{ user.id }}</td>
+                        <td class="px-6 py-4">{{ user.username }}</td>
+                        <td class="px-6 py-4">{{ user.role }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{{ url_for('enable_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-green-500 rounded-lg hover:bg-green-600">Activar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>

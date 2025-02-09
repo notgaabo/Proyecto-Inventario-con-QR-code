@@ -99,53 +99,85 @@
     </style>
 </head>
 <body>
-
-    {% include 'includes/header.html' %}
-    
-    <!-- Sidebar -->
-    <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
-        <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-            <ul class="space-y-2 font-medium">
+    <aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white sm:translate-x-0" aria-label="Sidebar">
+        {% include 'includes/header.html' %}
+        <div class="h-full px-3 pb-4 overflow-y-auto">
+            <ul class="space-y-2 font-medium text-black">
                 <li>
-                    <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
-                            <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
-                            <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-18v6h8V3h-8Z"/>
                         </svg>
-                        <span class="ms-3">Dashboard</span>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('create_user') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                        <i class="fas fa-pencil-alt"></i><span class="ms-3">Crear usuario</span>
+                    <a href="{{ url_for('create_user') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5Z"/>
+                        </svg>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Users</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 2C2.895 2 2 2.895 2 4v16c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2V4c0-1.105-.895-2-2-2H4zm8 12h-2V9h2v5zm0-7h-2V3h2v4z"/>
+                        </svg>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Inbox</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
+                        </svg>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2ZM7 6h9v12H7V6Zm0-2h9a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z"/>
+                        </svg>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign In</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2ZM4 12h16v2H4v-2ZM4 6h16V4H4v2Z"/>
+                        </svg>
+                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign Up</span>
                     </a>
                 </li>
             </ul>
         </div>
     </aside>
 
-    <!-- Main content -->
-    <div class="container">
-        <h2>Bienvenido, Admin</h2>
-        <h3>Usuarios</h3>
-        <table>
-            <thead>
+  <!-- Contenedor Principal -->
+<div class="p-6 bg-gray-100 min-h-screen ml-64 w-full">
+    <!-- Sección de Usuarios Activos -->
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Usuarios Activos</h2>
+    <div class="overflow-x-auto mt-4">
+        <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
+            <thead class="bg-blue-500 text-white">
                 <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Role</th>
-                    <th>Acciones</th>
+                    <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
+                    <th class="px-6 py-3 text-left">Username</th>
+                    <th class="px-6 py-3 text-left">Role</th>
+                    <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for user in usuarios %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.role }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn">Editar</a>
-                            <a href="{{ url_for('delete_user_route', user_id=user.id) }}" class="btn" style="background-color: #dc3545;">Eliminar</a>
+            <tbody class="divide-y divide-gray-300">
+                {% for user in usuarios_activos %}
+                    <tr class="hover:bg-blue-100 transition duration-200">
+                        <td class="px-6 py-4">{{ user.id }}</td>
+                        <td class="px-6 py-4">{{ user.username }}</td>
+                        <td class="px-6 py-4">{{ user.role }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-700">Editar</a>
+                            <a href="{{ url_for('disable_user', user_id=user.id) }}" class="px-3 py-1 ml-2 text-sm text-white bg-yellow-500 rounded-lg hover:bg-yellow-600">Desactivar</a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -153,5 +185,33 @@
         </table>
     </div>
 
+    <!-- Sección de Usuarios Deshabilitados -->
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mt-8">Usuarios Deshabilitados</h2>
+    <div class="overflow-x-auto mt-4">
+        <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
+            <thead class="bg-red-500 text-white">
+                <tr>
+                    <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
+                    <th class="px-6 py-3 text-left">Username</th>
+                    <th class="px-6 py-3 text-left">Role</th>
+                    <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-300">
+                {% for user in disabled_users %}
+                    <tr class="hover:bg-red-100 transition duration-200">
+                        <td class="px-6 py-4">{{ user.id }}</td>
+                        <td class="px-6 py-4">{{ user.username }}</td>
+                        <td class="px-6 py-4">{{ user.role }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{{ url_for('enable_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-green-500 rounded-lg hover:bg-green-600">Activar</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
 </body>
 </html>
