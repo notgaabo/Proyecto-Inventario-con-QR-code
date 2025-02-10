@@ -1,35 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Login - StockBeam</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Flowbite (Componentes Adicionales) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
-    <title>Login</title>
 </head>
 
-<!-- Se utiliza flex para centrar vertical y horizontalmente -->
-<section class="bg-white dark:bg-gray-900 h-screen flex justify-center items-center"> <!-- Aquí agregamos h-screen y flex -->
-    <div class="w-full max-w-sm mx-auto overflow-hidden bg-white rounded-lg shadow-md">
-        <div class="px-6 py-4">
-            <div class="flex justify-center">
-                <img class="w-60 h-auto sm:h-16" src="../static/img/1.png" alt="Logo">
-            </div>
-    
-            <h3 class="mt-3 text-xl font-medium text-center text-gray-600 dark:text-gray-200">Bienvenido</h3>
-    
-            <p class="mt-1 text-center text-gray-500 dark:text-gray-400">Login in StockBeam</p>
-    
-            <form action="/login" method="POST">
-                <input class="block w-full px-4 py-2 mt-4 text-gray-700 placeholder-gray-500 bg-white border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300" type="text" name="username" placeholder="Username" aria-label="Username" required />
-    
-                <input class="block w-full px-4 py-2 mt-4 text-gray-700 placeholder-gray-500 bg-white border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300" type="password" name="password" placeholder="Password" aria-label="Password" required />
-    
-                <div class="flex items-center justify-center mt-4">
-                    <button class="px-6 py-2 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-50">
-                        Sign In
-                    </button>
-                </div>
-            </form>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <section class="w-full max-w-sm bg-white p-6 rounded-lg shadow-lg">
+        <div class="text-center">
+            <img class="w-40 h-auto mx-auto" src="../static/img/1.png" alt="Logo StockBeam">
+            <h3 class="mt-3 text-2xl font-semibold text-gray-700">Bienvenido</h3>
+            <p class="mt-1 text-gray-500">Inicia sesión en StockBeam</p>
         </div>
-    </div>
-</section>
+
+        <form action="/login" method="POST" class="mt-6">
+            <div>
+                <input type="text" name="username" placeholder="Username" 
+                    class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border rounded-lg focus:border-orange-500 focus:ring-orange-300 focus:outline-none focus:ring focus:ring-opacity-40"
+                    required />
+            </div>
+
+            <div class="mt-4">
+                <input type="password" name="password" placeholder="Password"
+                    class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border rounded-lg focus:border-orange-500 focus:ring-orange-300 focus:outline-none focus:ring focus:ring-opacity-40"
+                    required />
+            </div>
+
+            <div class="flex items-center justify-center mt-6">
+                <button type="submit" 
+                    class="w-full px-4 py-2 text-white bg-orange-500 rounded-lg shadow-md hover:bg-orange-600 transition duration-300">
+                    Sign In
+                </button>
+            </div>
+        </form>
+    </section>
+</body>
+
+</html>

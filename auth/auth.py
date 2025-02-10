@@ -1,6 +1,5 @@
  # auth/auth.py
 
-
 from flask import session
 import bcrypt
 from db.config import Config 
