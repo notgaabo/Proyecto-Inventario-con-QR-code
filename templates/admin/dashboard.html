@@ -98,9 +98,11 @@
         }
     </style>
 </head>
-<body>
-    <aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white sm:translate-x-0" aria-label="Sidebar">
-        {% include 'includes/header.html' %}
+
+<body class="flex">
+    {% include 'includes/header.html' %}
+    
+    <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full sm:translate-x-0 bg-white">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <ul class="space-y-2 font-medium text-black">
                 <li>
@@ -158,7 +160,7 @@
   <!-- Contenedor Principal -->
 <div class="p-6 bg-gray-100 min-h-screen ml-64 w-full">
     <!-- Sección de Usuarios Activos -->
-    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Usuarios Activos</h2>
+    <h2 class="text-2xl font-bold text-gray-800">Usuarios Activos</h2>
     <div class="overflow-x-auto mt-4">
         <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
             <thead class="bg-blue-500 text-white">
@@ -186,7 +188,7 @@
     </div>
 
     <!-- Sección de Usuarios Deshabilitados -->
-    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mt-8">Usuarios Deshabilitados</h2>
+    <h2 class="text-2xl font-bold text-gray-800 mt-8">Usuarios Deshabilitados</h2>
     <div class="overflow-x-auto mt-4">
         <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
             <thead class="bg-red-500 text-white">
@@ -212,7 +214,9 @@
         </table>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+
 </body>
 </html>

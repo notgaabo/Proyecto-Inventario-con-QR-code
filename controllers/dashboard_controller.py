@@ -26,3 +26,10 @@ class StatisticsController:
 
         user = session['user']
         return render_template('user/statistics.html', user=user)  # Renderiza la plantilla de estadísticas
+    
+    @staticmethod
+    def generator_statisticI():
+        """Generador de estadísticas del usuario."""
+        # Implementación del código para generar las estadísticas del usuario
+        
+        

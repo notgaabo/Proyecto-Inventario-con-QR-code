@@ -1,11 +1,14 @@
-#app.py
-
+import plotly.graph_objs as go
+import plotly.io as pio
 from flask import Flask, render_template, redirect, url_for, session, request
 from datetime import timedelta
 import os
+from controllers.dashboard_controller import HomeController  
 from controllers.auth_controller import AuthController
 from controllers.user_controller import UserController
-from controllers.dashboard_controller import HomeController, StatisticsController
+from controllers.statistic_controller import StatisticsController
+from db.config import Config
+
 
 class InventoryApp(Flask):
     def __init__(self):
@@ -16,15 +19,12 @@ class InventoryApp(Flask):
         self.register_routes()
 
     def forbidden_error(self, e):
-        """Manejador de error 403"""
         return render_template('errors/403.html'), 403
     
     def page_not_found(self, e):
-        """Manejador de error 404"""
         return render_template('errors/404.html'), 404
 
     def register_error_handlers(self):
-        """Registra los manejadores de errores"""
         self.register_error_handler(403, self.forbidden_error)
         self.register_error_handler(404, self.page_not_found)
 
@@ -37,14 +37,31 @@ class InventoryApp(Flask):
         self.add_url_rule('/disable_user/<int:user_id>', 'disable_user', UserController.toggle_user_status, methods=['GET'])
         self.add_url_rule('/enable_user/<int:user_id>', 'enable_user', UserController.enable_user, methods=['GET'])
         self.add_url_rule('/statistics', 'statistics', StatisticsController.statistics)
+        self.add_url_rule('/statistics/chart', 'statistics_chart', self.statistic)
         self.add_url_rule('/logout', 'logout', AuthController.logout)
         self.add_url_rule('/disabled_error', 'disabled_user_error', self.disabled_user_error)
         self.add_url_rule('/403', 'forbidden_error', self.forbidden_error)
 
     def disabled_user_error(self):
-        """Página personalizada para usuarios deshabilitados"""
         return render_template('errors/disabled_user.html'), 403
+    
+    def statistic(self):
+        """Renderiza la página de estadísticas con el gráfico generado"""
+        # Obtenemos los datos de ventas
+        stats = StatisticsController.get_sales_data()
 
+        # Usamos las categorías directamente
+        categories = ['Semana 1', 'Semana 2', 'Mes', 'Trimestre']
+        # Repetimos los valores de las estadísticas para todas las categorías
+        values_sales = [float(stats["total_sales"])] * len(categories)
+        values_transactions = [float(stats["total_transactions"])] * len(categories)
+        values_profit = [float(stats["total_profit"])] * len(categories)
+
+        # Llamamos a la función que genera el gráfico
+        chart_html = StatisticsController.generate_chart()
+
+        # Pasamos el gráfico y las estadísticas a la plantilla
+        return render_template("user/statistics.html", chart=chart_html, stats=stats)
 
 app = InventoryApp()
 
