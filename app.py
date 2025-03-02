@@ -1,3 +1,5 @@
+#app.py
+
 import plotly.graph_objs as go
 import plotly.io as pio
 from flask import Flask, render_template, redirect, url_for, session, request
@@ -7,8 +9,9 @@ from controllers.dashboard_controller import HomeController
 from controllers.auth_controller import AuthController
 from controllers.user_controller import UserController
 from controllers.statistic_controller import StatisticsController
-from db.config import Config
-
+from controllers.product_controller import ProductController
+from controllers.qr_controller import QrController
+from db import Config
 
 class InventoryApp(Flask):
     def __init__(self):
@@ -40,6 +43,11 @@ class InventoryApp(Flask):
         self.add_url_rule('/statistics/chart', 'statistics_chart', self.statistic)
         self.add_url_rule('/logout', 'logout', AuthController.logout)
         self.add_url_rule('/disabled_error', 'disabled_user_error', self.disabled_user_error)
+        self.add_url_rule('/generate_qr/<int:product_id>', 'generate_qr', QrController.generate_qr)
+        self.add_url_rule('/productos', 'product_list', ProductController.get_product_list)
+        self.add_url_rule('/productos/agregar', 'add_product', ProductController.add_product, methods=['POST'])
+        self.add_url_rule('/productos/editar/<int:product_id>', 'edit_product', ProductController.update_product, methods=['POST'])
+        self.add_url_rule('/productos/eliminar/<int:product_id>', 'delete_product', ProductController.delete_product, methods=['POST'])
         self.add_url_rule('/403', 'forbidden_error', self.forbidden_error)
 
     def disabled_user_error(self):

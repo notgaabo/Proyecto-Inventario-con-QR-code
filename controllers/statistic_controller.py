@@ -1,36 +1,45 @@
 import plotly.graph_objs as go
 import plotly.io as pio
-from flask import render_template
+from flask import render_template, session, redirect, url_for
 from db.config import Config
 
 class StatisticsController:
     @staticmethod
     def statistics():
         """Renderiza la página de estadísticas con el gráfico"""
-        # Obtenemos las estadísticas de ventas
+        if 'user' not in session:
+            return redirect(url_for('login'))  # Redirige si no hay sesión activa
+
         stats = StatisticsController.get_sales_data()
-
-        # Llamamos al gráfico generado
-        chart_html = StatisticsController.generate_chart(stats)  # Ahora pasamos stats a la función
-
-        # Pasamos las estadísticas y el gráfico a la plantilla
+        chart_html = StatisticsController.generate_chart(stats)
         return render_template("user/statistics.html", chart=chart_html, stats=stats)
 
     @staticmethod
     def get_sales_data():
-        """Consulta la base de datos y devuelve las estadísticas de ventas en formato diccionario"""
+        """Consulta la base de datos y devuelve las estadísticas de ventas solo del usuario autenticado"""
+        if 'user' not in session:
+            return {
+                "total_sales": 0,
+                "total_transactions": 0,
+                "total_profit": 0
+            }
+
+        user_id = session['user']['id']
+        
         db = Config()
         connection = db.get_db_connection()
         cursor = connection.cursor()
 
         query = """
             SELECT 
-                COALESCE(SUM(sale_price * quantity), 0) AS total_sales,
-                COALESCE(COUNT(id), 0) AS total_transactions,
-                COALESCE(SUM(profit), 0) AS total_profit
-            FROM sales
+                COALESCE(SUM(s.sale_price * s.quantity), 0) AS total_sales,
+                COALESCE(COUNT(s.id), 0) AS total_transactions,
+                COALESCE(SUM(s.profit), 0) AS total_profit
+            FROM sales s
+            JOIN products p ON s.product_id = p.id
+            WHERE p.user_id = %s
         """
-        cursor.execute(query)
+        cursor.execute(query, (user_id,))
         result = cursor.fetchone()
         cursor.close()
         connection.close()
@@ -51,21 +60,18 @@ class StatisticsController:
     @staticmethod
     def generate_chart(stats):
         """Genera el gráfico de estadísticas con Plotly"""
-        # Define las categorías de las barras (en este caso, categorías fijas como ejemplo)
         categories = ['Semana 1', 'Semana 2', 'Mes', 'Trimestre']
 
-        # Usamos los valores de ventas, transacciones y ganancias
         values_sales = [float(stats["total_sales"])] * len(categories)
         values_transactions = [float(stats["total_transactions"])] * len(categories)
         values_profit = [float(stats["total_profit"])] * len(categories)
 
-        # Crea el gráfico de barras
-        fig = go.Figure(data=[
+        fig = go.Figure(data=[ 
             go.Bar(
                 y=categories,
                 x=values_sales,
                 type='bar',
-                orientation='h',  # Barra horizontal
+                orientation='h',  
                 name='Ventas',
                 marker=dict(color='#4CAF50')
             ),
@@ -87,15 +93,13 @@ class StatisticsController:
             )
         ])
 
-        # Configuraciones adicionales del gráfico
         fig.update_layout(
             title="Estadísticas de Ventas",
             xaxis_title="Cantidad",
             yaxis_title="Período",
-            template="plotly_dark",  # Tema oscuro para el gráfico
-            barmode='group'  # Para agrupar las barras
+            template="plotly_dark",  
+            barmode='group'
         )
 
-        # Convierte el gráfico a HTML para insertarlo en la plantilla
         chart_html = pio.to_html(fig, full_html=False)
         return chart_html
