@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Productos</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.5/flowbite.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 p-5 font-sans">
     <h1 class="text-3xl font-semibold text-gray-800 mb-6">Lista de Productos</h1>
     
+    <!-- Mostrar errores si existen -->
+    {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+            <span>{{ error }}</span>
+        </div>
+    {% endif %}
+
     <!-- Botón para abrir el modal de agregar productos -->
     <button data-modal-target="crud-modal" data-modal-toggle="crud-modal" class="mb-6 bg-green-600 text-white p-2 rounded-md hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300">
         Agregar Producto
@@ -68,7 +75,6 @@
                 <li class="bg-white p-4 rounded-lg shadow-md">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <!-- Placeholder para imagen (puedes personalizar esto) -->
                             <img src="https://via.placeholder.com/50" alt="Imagen de {{ product.name }}" class="w-12 h-12 object-cover rounded mr-3">
                             <div>
                                 <strong class="text-lg">{{ product.name }}</strong> 
@@ -120,6 +126,6 @@
         {% endif %}
     </ul>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.5/flowbite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </body>
 </html>

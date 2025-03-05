@@ -4,54 +4,57 @@ from flask import request, jsonify, send_file, session, redirect, url_for, rende
 import qrcode
 import os
 import io
-import json  # Corregimos el typo: `jsonify` ya incluye dumps, pero usaremos json.loads para QR
+import json
 from db import Config
+from PIL import Image
 
 class QrController:
     @staticmethod
     def generate_qr(product_id, save_locally=True):
         try:
-            connection = Config.get_db_connection()
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT id, name, category, price, stock FROM products WHERE id = %s AND user_id = %s", 
-                           (product_id, session['user']['id']))
-            product = cursor.fetchone()
-            cursor.close()
-            connection.close()
-            
-            if not product:
-                return jsonify({"success": False, "message": "Product not found"}), 404
+            with Config.get_db_connection() as connection:
+                with connection.cursor(dictionary=True) as cursor:
+                    cursor.execute("SELECT id, name FROM products WHERE id = %s AND user_id = %s", 
+                                  (product_id, session['user']['id']))
+                    product = cursor.fetchone()
+                
+                if not product:
+                    return jsonify({"success": False, "message": "Product not found"}), 404
 
-            # Codificar más datos en el QR
-            qr_data = json.dumps({  # Usamos json estándar en lugar de jsonify aquí
-                "id": product["id"],
-                "name": product["name"],
-                "category": product["category"],
-                "price": float(product["price"]),
-                "stock": product["stock"]
-            })
-            
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(qr_data)
-            qr.make(fit=True)
-            qr_img = qr.make_image(fill_color="black", back_color="white")
-            
-            if save_locally:
-                qr_dir = os.path.join("static", "qr_codes")
-                os.makedirs(qr_dir, exist_ok=True)
-                file_path = os.path.join(qr_dir, f"{product_id}.png")
-                qr_img.save(file_path)
-                return send_file(file_path, mimetype="image/png")
-            
-            img_io = io.BytesIO()
-            qr_img.save(img_io, format="PNG")
-            img_io.seek(0)
-            return send_file(img_io, mimetype="image/png")
+                qr_data = str(product["id"])  # Solo el ID
+                
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_H,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(qr_data)
+                qr.make(fit=True)
+                qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGBA')
+
+                logo_path = os.path.join("static", "img", "logo.png")
+                if not os.path.exists(logo_path):
+                    return jsonify({"success": False, "message": "Logo file not found"}), 500
+                
+                logo = Image.open(logo_path).convert('RGBA')
+                qr_width, qr_height = qr_img.size
+                logo_size = qr_width // 4
+                logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+                logo_position = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+                qr_img.paste(logo, logo_position, logo)
+
+                if save_locally:
+                    qr_dir = os.path.join("static", "qr_codes")
+                    os.makedirs(qr_dir, exist_ok=True)
+                    file_path = os.path.join(qr_dir, f"{product_id}.png")
+                    qr_img.save(file_path, format="PNG")
+                    return send_file(file_path, mimetype="image/png")
+                
+                img_io = io.BytesIO()
+                qr_img.save(img_io, format="PNG")
+                img_io.seek(0)
+                return send_file(img_io, mimetype="image/png")
         except Exception as e:
             return jsonify({"success": False, "message": str(e)}), 500
 
@@ -65,12 +68,12 @@ class LectorController:
                        (session['user']['id'],))
         productos = [
             {
-                'id': str(row['id']),  # Convertimos a string para consistencia con el frontend
+                'id': str(row['id']),
                 'nombre': row['name'],
-                'categoria': row['category'],  # Ajustamos clave a lo esperado por el frontend
-                'precio': float(row['price']),  # Ajustamos clave
+                'categoria': row['category'],
+                'precio': float(row['price']),
                 'stock': row['stock'],
-                'costo': float(row['cost_price'])  # Ajustamos clave
+                'costo': float(row['cost_price'])
             } for row in cursor.fetchall()
         ]
         conn.close()
@@ -116,9 +119,7 @@ class LectorController:
             if not codigo:
                 return jsonify({"success": False, "message": "No code provided"}), 400
 
-            # Asumir que el código es el ID directamente como string
             codigo = str(codigo)
-
             inventario = {p['id']: p for p in LectorController.get_productos()}
             if codigo in inventario:
                 cart = session.get('cart', {})

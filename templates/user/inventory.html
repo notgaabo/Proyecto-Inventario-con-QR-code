@@ -62,27 +62,16 @@
         };
     
         // Crear el objeto de audio para el sonido "PI"
-        const beepSound = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3'); // Beep corto
-    
-        // Función debounce
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
+        const beepSound = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
     
         // Iniciar escáner
         html5QrCode.start(
             { facingMode: "environment" },
             qrConfig,
-            debounce(async (decodedText) => {
+            async (decodedText) => {
+                // Si está procesando o el código es el mismo que el último, ignorar
                 if (isProcessing || decodedText === lastScannedCode) return;
+    
                 isProcessing = true;
                 lastScannedCode = decodedText;
     
@@ -97,9 +86,9 @@
                     if (result.success) {
                         document.getElementById('qr-result').innerHTML = 
                             `<p class="text-green-600">Añadido: ${result.producto} (x${result.cantidad})</p>`;
-                        beepSound.play(); // Reproducir el sonido "PI"
-                        loadProducts();   // Actualizar lista de productos
-                        updateCart();     // Actualizar carrito
+                        beepSound.play();
+                        loadProducts();
+                        updateCart();
                     } else {
                         document.getElementById('qr-result').innerHTML = 
                             `<p class="text-red-600">${result.message}</p>`;
@@ -108,11 +97,14 @@
                     document.getElementById('qr-result').innerHTML = 
                         `<p class="text-red-600">Error al procesar el QR: ${error.message}</p>`;
                 } finally {
+                    // Reiniciar el estado inmediatamente después de procesar
                     isProcessing = false;
-                    setTimeout(() => { lastScannedCode = null; }, 1000);
+                    lastScannedCode = null; // Permitir escanear cualquier código nuevo inmediatamente
                 }
-            }, 500),
-            (error) => {}
+            },
+            (error) => {
+                // Ignorar errores de escaneo en tiempo real (como cuando no hay QR visible)
+            }
         ).catch(err => console.error("Error al iniciar el escáner:", err));
     
         // Cargar lista de productos
@@ -163,13 +155,11 @@
     
                 if (result.success) {
                     const cart = result.carrito || {};
-                    console.log('Datos del carrito desde /carrito:', cart);
-    
                     let html = '';
                     let total = 0;
     
                     Object.entries(cart).forEach(([id, item]) => {
-                        const costo = item.price !== undefined ? item.price : 0; // Cambiado a price
+                        const costo = item.price !== undefined ? item.price : 0;
                         const cantidad = item.cantidad || 0;
                         const subtotal = costo * cantidad;
                         total += subtotal;
@@ -220,7 +210,7 @@
                 const result = await response.json();
                 if (result.success) {
                     updateCart();
-                    loadProducts(); // Actualizar lista de productos después de cambiar cantidad
+                    loadProducts();
                 } else {
                     alert(result.message);
                     updateCart();
