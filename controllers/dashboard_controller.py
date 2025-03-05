@@ -1,6 +1,5 @@
  # controllers/dashboard_controller.py
 
-
 from flask import render_template, session, redirect, url_for
 from auth.auth import Auth
 
