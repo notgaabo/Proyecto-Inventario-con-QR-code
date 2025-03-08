@@ -1,6 +1,5 @@
 from flask import Flask, render_template
 from db.config import Config
-import mysql.connector 
 import json
 
 app = Flask(__name__)

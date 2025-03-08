@@ -1,5 +1,5 @@
 from flask import session, render_template, request, redirect, url_for, flash
-from auth.auth import Auth, User
+from auth.auth import User
 
 class UserController:
     @staticmethod

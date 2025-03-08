@@ -1,8 +1,5 @@
-import plotly.graph_objs as go
-import plotly.io as pio
 from flask import Flask, render_template, redirect, url_for, session, request
 from datetime import timedelta
-import os
 from controllers.dashboard_controller import HomeController  
 from controllers.auth_controller import AuthController
 from controllers.user_controller import UserController
@@ -10,12 +7,11 @@ from controllers.statistic_controller import StatisticsController
 from controllers.product_controller import ProductController
 from controllers.qr_controller import QrController
 from controllers.qr_controller import LectorController
-from db import Config
 
 class InventoryApp(Flask):
     def __init__(self):
         super().__init__(__name__)
-        self.secret_key = os.urandom(24)
+        self.secret_key = 'StockBeam'
         self.permanent_session_lifetime = timedelta(days=7)
         self.register_error_handlers()
         self.register_routes()
@@ -35,29 +31,24 @@ class InventoryApp(Flask):
         self.add_url_rule('/', 'home', HomeController.home)
         self.add_url_rule('/login', 'login', AuthController.login, methods=['GET', 'POST'])
         self.add_url_rule('/logout', 'logout', AuthController.logout)
-        
         # Rutas de administración
         self.add_url_rule('/admin', 'admin_dashboard', UserController.admin_dashboard)
         self.add_url_rule('/create_user', 'create_user', UserController.create_user, methods=['GET', 'POST'])
         self.add_url_rule('/edit_user', 'edit_user', UserController.edit_user, methods=['POST'])  # Updated: No <int:user_id>, POST only
         self.add_url_rule('/disable_user/<int:user_id>', 'disable_user', UserController.disable_user, methods=['GET'])  # Corrected to disable_user
         self.add_url_rule('/enable_user/<int:user_id>', 'enable_user', UserController.enable_user, methods=['GET'])
-        
         # Estadísticas
         self.add_url_rule('/statistics', 'statistics', StatisticsController.statistics)
         self.add_url_rule('/statistics/chart', 'statistics_chart', self.statistic)
-        
         # Errores
         self.add_url_rule('/disabled_error', 'disabled_user_error', self.disabled_user_error)
         self.add_url_rule('/403', 'forbidden_error', self.forbidden_error)
-        
         # Productos (HTML y JSON)
         self.add_url_rule('/productos/list', 'product_list', ProductController().get_product_list)  # Lista HTML
         self.add_url_rule('/productos/agregar', 'add_product', ProductController().add_product, methods=['GET', 'POST'])
         self.add_url_rule('/productos/editar/<int:product_id>', 'edit_product', ProductController().update_product, methods=['GET', 'POST'])
         self.add_url_rule('/productos/eliminar/<int:product_id>', 'delete_product', ProductController().delete_product, methods=['POST'])
         self.add_url_rule('/productos', 'productos', LectorController.productos, methods=['GET'])  # JSON para inventario
-        
         # QR y Carrito
         self.add_url_rule('/generate_qr/<int:product_id>', 'generate_qr', QrController.generate_qr)
         self.add_url_rule('/inventory', 'inventory', LectorController.inventory)
@@ -82,7 +73,6 @@ class InventoryApp(Flask):
 
         return render_template("user/statistics.html", chart=chart_html, stats=stats)
 
-# Creación de la aplicación
 app = InventoryApp()
 
 @app.before_request
@@ -96,10 +86,9 @@ def check_user_status():
 
         admin_routes = ['admin_dashboard', 'create_user', 'edit_user', 'disable_user', 'enable_user']
         if request.endpoint in admin_routes and user.get('role') != 'admin':
-            return render_template('errors/403.html'), 403  # Renderiza el error 403 sin redirigir
+            return render_template('errors/403.html'), 403
 
     return None
 
-# Inicio de la aplicación
 if __name__ == '__main__':
     app.run(debug=True)

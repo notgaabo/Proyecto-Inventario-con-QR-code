@@ -4,7 +4,6 @@ from flask import request, jsonify, send_file, session, redirect, url_for, rende
 import qrcode
 import os
 import io
-import json
 from db import Config
 from PIL import Image
 

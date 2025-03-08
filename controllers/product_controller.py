@@ -1,4 +1,3 @@
-import mysql.connector
 from flask import render_template, request, redirect, url_for, session, jsonify, make_response
 from db import Config
 import os
