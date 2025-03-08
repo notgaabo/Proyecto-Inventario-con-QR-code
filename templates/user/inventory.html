@@ -1,251 +1,44 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario QR</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-</head>
-<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
-    <div class="container mx-auto p-6 flex-grow">
-        <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-800">Sistema de Inventario QR</h1>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Escáner QR -->
-            <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition duration-300">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700"><i class="fas fa-qrcode mr-2 text-blue-500"></i>Escáner QR</h2>
-                <div id="qr-reader" class="w-full mb-4 border rounded-lg overflow-hidden"></div>
-                <div id="qr-result" class="text-center text-lg font-medium text-gray-600"></div>
-            </div>
+{% extends 'includes/base_user.html' %}
 
-            <!-- Lista de Productos -->
-            <div class="bg-white p-6 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700"><i class="fas fa-list mr-2 text-green-500"></i>Lista de Productos</h2>
-                <div id="product_list" class="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <!-- Productos se cargarán dinámicamente -->
-                </div>
-            </div>
+{% block content %}
+    <!-- External CSS and JS Libraries -->
 
-            <!-- Carrito -->
-            <div class="bg-white p-6 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700"><i class="fas fa-shopping-cart mr-2 text-yellow-500"></i>Carrito</h2>
-                <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <!-- Items del carrito se cargarán dinámicamente -->
+    <body class="bg-gray-50 font-sans min-h-screen flex flex-col">
+        <div class="container mx-auto p-6 lg:p-8 flex-grow">
+            <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-900 tracking-tight">
+                <i class="fas fa-warehouse mr-2 text-orange-600"></i>Sistema de Almacenamiento QR
+            </h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Escáner QR -->
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <i class="fas fa-qrcode mr-2 text-orange-500"></i>Escanear Código QR
+                    </h2>
+                    <div id="qr-reader" class="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden"></div>
+                    <div id="qr-result" class="text-center text-lg font-medium text-gray-700 italic"></div>
                 </div>
-                <div class="mt-6 border-t pt-4">
-                    <p id="cart_total" class="font-semibold text-lg text-gray-800">Total: $0.00</p>
-                    <button id="checkout_btn" 
-                            class="mt-4 w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Completar Salida
-                    </button>
+
+                <!-- Carrito (renombrado a Registro de Salida) -->
+                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                        <i class="fas fa-box-open mr-2 text-orange-500"></i>Registro de Salida
+                    </h2>
+                    <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        <!-- Items del carrito se cargarán dinámicamente -->
+                    </div>
+                    <div class="mt-6 border-t border-gray-200 pt-4">
+                        <p id="cart_total" class="font-semibold text-lg text-gray-800">Total Registrado: $0.00</p>
+                        <button id="checkout_btn" 
+                                class="mt-4 w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium shadow-sm">
+                            <i class="fas fa-check-circle mr-2"></i>Confirmar Salida
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <footer class="bg-gray-800 text-white text-center py-4">
-        <p>© 2025 Sistema de Inventario QR. Todos los derechos reservados.</p>
-    </footer>
-    <script>
-        // Variables globales
-        let lastScannedCode = null;
-        let isProcessing = false;
-    
-        // Configuración del escáner QR
-        const html5QrCode = new Html5Qrcode("qr-reader");
-        const qrConfig = { 
-            fps: 15,
-            qrbox: { width: 200, height: 200 },
-            aspectRatio: 1.0
-        };
-    
-        // Crear el objeto de audio para el sonido "PI"
-        const beepSound = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
-    
-        // Iniciar escáner
-        html5QrCode.start(
-            { facingMode: "environment" },
-            qrConfig,
-            async (decodedText) => {
-                // Si está procesando o el código es el mismo que el último, ignorar
-                if (isProcessing || decodedText === lastScannedCode) return;
-    
-                isProcessing = true;
-                lastScannedCode = decodedText;
-    
-                try {
-                    const response = await fetch('/escanear', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ codigo: decodedText })
-                    });
-                    const result = await response.json();
-    
-                    if (result.success) {
-                        document.getElementById('qr-result').innerHTML = 
-                            `<p class="text-green-600">Añadido: ${result.producto} (x${result.cantidad})</p>`;
-                        beepSound.play();
-                        loadProducts();
-                        updateCart();
-                    } else {
-                        document.getElementById('qr-result').innerHTML = 
-                            `<p class="text-red-600">${result.message}</p>`;
-                    }
-                } catch (error) {
-                    document.getElementById('qr-result').innerHTML = 
-                        `<p class="text-red-600">Error al procesar el QR: ${error.message}</p>`;
-                } finally {
-                    // Reiniciar el estado inmediatamente después de procesar
-                    isProcessing = false;
-                    lastScannedCode = null; // Permitir escanear cualquier código nuevo inmediatamente
-                }
-            },
-            (error) => {
-                // Ignorar errores de escaneo en tiempo real (como cuando no hay QR visible)
-            }
-        ).catch(err => console.error("Error al iniciar el escáner:", err));
-    
-        // Cargar lista de productos
-        async function loadProducts() {
-            try {
-                const response = await fetch('/productos');
-                const result = await response.json();
-    
-                if (result.success && Array.isArray(result.productos)) {
-                    const productos = result.productos;
-                    let html = '';
-    
-                    if (productos.length === 0) {
-                        html = `<p class="text-gray-600">No hay productos para vender</p>`;
-                    } else {
-                        productos.forEach(producto => {
-                            html += `
-                                <div class="border p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition duration-200">
-                                    <h3 class="font-semibold text-gray-800">${producto.nombre || 'Sin nombre'}</h3>
-                                    <p class="text-gray-600">Categoría: ${producto.categoria || 'N/A'}</p>
-                                    <p class="text-gray-600">Precio De Venta: $${producto.precio?.toFixed(2) || '0.00'}</p>
-                                    <p class="text-gray-600">Stock: ${producto.stock || 0}</p>
-                                    <p class="text-gray-600">Costo Compra: $${producto.costo?.toFixed(2) || '0.00'}</p>
-                                </div>
-                            `;
-                        });
-                    }
-    
-                    document.getElementById('product_list').innerHTML = html;
-                } else {
-                    document.getElementById('product_list').innerHTML = 
-                        `<p class="text-red-600">Error: ${result.message || 'No se pudieron cargar los productos'}</p>`;
-                }
-            } catch (error) {
-                document.getElementById('product_list').innerHTML = 
-                    `<p class="text-red-600">Error al cargar productos: ${error.message}</p>`;
-            }
-        }
-    
-        // Actualizar carrito
-        async function updateCart() {
-            try {
-                const response = await fetch('/carrito', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const result = await response.json();
-    
-                if (result.success) {
-                    const cart = result.carrito || {};
-                    let html = '';
-                    let total = 0;
-    
-                    Object.entries(cart).forEach(([id, item]) => {
-                        const costo = item.price !== undefined ? item.price : 0;
-                        const cantidad = item.cantidad || 0;
-                        const subtotal = costo * cantidad;
-                        total += subtotal;
-    
-                        html += `
-                            <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
-                                <div>
-                                    <h3 class="font-semibold text-gray-800">${item.nombre || 'Sin nombre'}</h3>
-                                    <p class="text-gray-600">Precio: $${costo.toFixed(2)} x 
-                                        <input type="number" 
-                                               class="w-16 border rounded p-1 text-center" 
-                                               value="${cantidad}" 
-                                               min="0" 
-                                               onchange="updateQuantity('${id}', this.value)">
-                                    </p>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="text-gray-700 font-medium">$${subtotal.toFixed(2)}</span>
-                                    <button onclick="updateQuantity('${id}', 0)" 
-                                            class="ml-3 text-red-500 hover:text-red-700 transition duration-200">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-    
-                    document.getElementById('cart_items').innerHTML = html || '<p class="text-gray-500">Carrito vacío</p>';
-                    document.getElementById('cart_total').textContent = `Total: $${total.toFixed(2)}`;
-                } else {
-                    document.getElementById('cart_items').innerHTML = 
-                        `<p class="text-red-600">Error al cargar el carrito: ${result.message}</p>`;
-                }
-            } catch (error) {
-                document.getElementById('cart_items').innerHTML = 
-                    `<p class="text-red-600">Error al cargar el carrito: ${error.message}</p>`;
-            }
-        }
-    
-        // Actualizar cantidad en el carrito
-        async function updateQuantity(productId, quantity) {
-            try {
-                const response = await fetch('/actualizar_carrito', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ codigo: productId, cantidad: parseInt(quantity) })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    updateCart();
-                    loadProducts();
-                } else {
-                    alert(result.message);
-                    updateCart();
-                }
-            } catch (error) {
-                alert('Error al actualizar el carrito: ' + error.message);
-                updateCart();
-            }
-        }
-    
-        // Completar salida
-        document.getElementById('checkout_btn').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/dar_salida', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const result = await response.json();
-                if (result.success) {
-                    alert('Salida registrada exitosamente');
-                    updateCart();
-                    loadProducts();
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                alert('Error al procesar la salida: ' + error.message);
-            }
-        });
-    
-        // Cargar datos iniciales
-        window.onload = () => {
-            loadProducts();
-            updateCart();
-        };
-    </script>
-</body>
-</html>
+        <!-- Flask Static File Integration -->
+        <script src="{{ url_for('static', filename='js/qr.js') }}"></script>
+    </body>
+{% endblock %}

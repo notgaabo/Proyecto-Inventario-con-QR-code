@@ -9,21 +9,35 @@
 <body class="flex items-center justify-center min-h-screen bg-gray-100">
     <div class="bg-white shadow-lg rounded-2xl flex max-w-4xl w-full">
         <div class="w-1/2 hidden md:block">
-            <img src="../static/img/1.png" alt="Formulario Imagen"
+            <img src="{{ url_for('static', filename='img/1.png') }}" alt="Formulario Imagen"
                 class="w-full h-full object-cover rounded-l-2xl">
         </div>
         <div class="w-full md:w-1/2 p-8">
             <h2 class="text-3xl font-bold text-orange-500 mb-6">Crear Usuario</h2>
-            <form method="POST" class="space-y-4">
+            <form method="POST" action="{{ url_for('create_user') }}" class="space-y-4">
                 <div>
                     <label class="block text-gray-700 font-semibold">Usuario</label>
                     <input type="text" name="username" required placeholder="Ingrese su usuario"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-semibold">Contrasena</label>
-                    <input type="password" name="password" required placeholder="Ingrese su contrasena"
+                    <label class="block text-gray-700 font-semibold">Email</label>
+                    <input type="email" name="email" required placeholder="Ingrese su email"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold">Contraseña</label>
+                    <input type="password" name="password" required placeholder="Ingrese su contraseña"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div>
+                    <label for="role" class="block text-gray-700 font-semibold">Seleccionar Rol</label>
+                    <select id="role" name="role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-400 focus:border-orange-400 block w-full p-2.5">
+                        <option selected>Seleccione un rol</option>
+                        {% for role in ['admin', 'user'] %}
+                        <option value="{{ role }}">{{ 'Administrador' if role == 'admin' else 'Usuario' }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <button type="submit"
                     class="w-full bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition">

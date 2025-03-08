@@ -1,222 +1,184 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/flowbite/dist/flowbite.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+{% extends 'includes/base_admin.html' %}
 
-    <title>Dashboard Admin</title>
-    
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
+{% block content %}
+    <!-- Contenedor Principal -->
+    <div class="p-6 bg-gray-50 min-h-screen">
+        <div class="max-w-5xl mx-auto">
+            <!-- Sección de Usuarios Activos -->
+            <div class="mb-8 relative">
+                <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-orange-400 pb-2 inline-block mb-6">
+                    Usuarios Activos
+                </h2>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-10">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Username</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-100 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for user in usuarios_activos %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ user.username }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.role }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    <button data-modal-target="edit-user-modal" data-modal-toggle="edit-user-modal" 
+                                            onclick="openEditModal('{{ user.id }}', '{{ user.username }}', '{{ user.role }}')"
+                                            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-orange-500 rounded hover:bg-orange-600 transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 mr-2">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Editar
+                                    </button>
+                                    <a href="{{ url_for('disable_user', user_id=user.id) }}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gray-600 rounded hover:bg-gray-700 transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                        </svg>
+                                        Desactivar
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-        h2, h3 {
-            color: #333;
-            text-align: center;
-        }
-
-        a {
-            text-decoration: none;
-            color: #007bff;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        /* Asegurar que el container no se solape con el header ni el sidebar */
-        .container {
-            width: 80%;
-            margin-left: 250px; /* Deja espacio para el sidebar */
-            padding: 20px;
-            margin-top: 60px; /* Agrega margen superior para que no se oculte el contenido por el header */
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            color: #fff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #f4f4f4;
-            color: #333;
-        }
-
-        td a {
-            margin-right: 10px;
-        }
-
-        .actions {
-            display: flex;
-            justify-content: center;
-        }
-
-        .actions a {
-            margin-right: 5px;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 3px;
-        }
-
-        .actions a:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-
-<body class="flex">
-    {% include 'includes/header.html' %}
-    
-    <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full sm:translate-x-0 bg-white">
-        <div class="h-full px-3 pb-4 overflow-y-auto">
-            <ul class="space-y-2 font-medium text-black">
-                <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-18v6h8V3h-8Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('create_user') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Users</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M4 2C2.895 2 2 2.895 2 4v16c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2V4c0-1.105-.895-2-2-2H4zm8 12h-2V9h2v5zm0-7h-2V3h2v4z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Inbox</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Products</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M16 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2ZM7 6h9v12H7V6Zm0-2h9a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign In</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2ZM4 12h16v2H4v-2ZM4 6h16V4H4v2Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign Up</span>
-                    </a>
-                </li>
-            </ul>
+            <!-- Sección de Usuarios Deshabilitados -->
+            <div class="mb-8 relative">
+                <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-orange-400 pb-2 inline-block mb-6">
+                    Usuarios Deshabilitados
+                </h2>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Username</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-100 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for user in disabled_users %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ user.username }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.role }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    <a href="{{ url_for('enable_user', user_id=user.id) }}" 
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-orange-500 rounded hover:bg-orange-600 transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Activar
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </aside>
-
-  <!-- Contenedor Principal -->
-<div class="p-6 bg-gray-100 min-h-screen ml-64 w-full">
-    <!-- Sección de Usuarios Activos -->
-    <h2 class="text-2xl font-bold text-gray-800">Usuarios Activos</h2>
-    <div class="overflow-x-auto mt-4">
-        <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
-            <thead class="bg-blue-500 text-white">
-                <tr>
-                    <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
-                    <th class="px-6 py-3 text-left">Username</th>
-                    <th class="px-6 py-3 text-left">Role</th>
-                    <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-300">
-                {% for user in usuarios_activos %}
-                    <tr class="hover:bg-blue-100 transition duration-200">
-                        <td class="px-6 py-4">{{ user.id }}</td>
-                        <td class="px-6 py-4">{{ user.username }}</td>
-                        <td class="px-6 py-4">{{ user.role }}</td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-700">Editar</a>
-                            <a href="{{ url_for('disable_user', user_id=user.id) }}" class="px-3 py-1 ml-2 text-sm text-white bg-yellow-500 rounded-lg hover:bg-yellow-600">Desactivar</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 
-    <!-- Sección de Usuarios Deshabilitados -->
-    <h2 class="text-2xl font-bold text-gray-800 mt-8">Usuarios Deshabilitados</h2>
-    <div class="overflow-x-auto mt-4">
-        <table class="min-w-full bg-white border border-gray-300 shadow-md rounded-lg overflow-hidden">
-            <thead class="bg-red-500 text-white">
-                <tr>
-                    <th class="px-6 py-3 text-left rounded-tl-lg">ID</th>
-                    <th class="px-6 py-3 text-left">Username</th>
-                    <th class="px-6 py-3 text-left">Role</th>
-                    <th class="px-6 py-3 text-center rounded-tr-lg">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-300">
-                {% for user in disabled_users %}
-                    <tr class="hover:bg-red-100 transition duration-200">
-                        <td class="px-6 py-4">{{ user.id }}</td>
-                        <td class="px-6 py-4">{{ user.username }}</td>
-                        <td class="px-6 py-4">{{ user.role }}</td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="{{ url_for('enable_user', user_id=user.id) }}" class="px-3 py-1 text-sm text-white bg-green-500 rounded-lg hover:bg-green-600">Activar</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Modal para Editar Usuario (Flowbite) -->
+    <div id="edit-user-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-800">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        Editar Usuario
+                    </h3>
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="edit-user-modal">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Cerrar modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="p-4 md:p-5">
+                    <form class="space-y-4" method="POST" action="{{ url_for('edit_user') }}">
+                        <input type="hidden" name="user_id" id="editUserId">
+                        <div>
+                            <label for="editUsername" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Username</label>
+                            <input type="text" name="username" id="editUsername" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500" required />
+                        </div>
+                        <div class="relative">
+                            <label for="editPassword" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password (dejar en blanco para no cambiar)</label>
+                            <input type="password" name="password" id="editPassword" placeholder="••••••••" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 pr-10 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500" />
+                            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center pr-3 mt-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div>
+                            <label for="editRole" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role</label>
+                            <select name="role" id="editRole" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-orange-500 dark:focus:border-orange-500" required>
+                                <option value="admin">Admin</option>
+                                <option value="user">User</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" data-modal-hide="edit-user-modal" class="text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-orange-800">Cancelar</button>
+                            <button type="submit" class="text-white bg-orange-500 hover:bg-orange-600 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-800">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-
-</body>
-</html>
+    <!-- JavaScript para poblar el modal y toggle de contraseña -->
+    <script>
+        console.log("Script loaded"); // Debug to confirm script runs
+    
+        function openEditModal(userId, username, role) {
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editPassword').value = ''; // Limpiar el campo de contraseña
+        }
+    
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('editPassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+    
+        if (!togglePassword || !passwordInput || !eyeIcon) {
+            console.error("One or more elements not found:", { togglePassword, passwordInput, eyeIcon });
+        } else {
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                console.log("Toggled to:", type); // Debug to confirm toggle
+    
+                // Cambiar el ícono
+                if (type === 'text') {
+                    eyeIcon.innerHTML = `
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18"/>
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    `;
+                } else {
+                    eyeIcon.innerHTML = `
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    `;
+                }
+            });
+        }
+    </script>
+{% endblock %}

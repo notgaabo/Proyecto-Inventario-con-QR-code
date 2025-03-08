@@ -12,7 +12,7 @@ class HomeController:
 
         user = session['user']
         if user['role'] == 'admin':
-            return redirect(url_for('admin/dashboard'))  # Redirige al dashboard de admin
+            return redirect(url_for('admin_dashboard'))  # Redirige al dashboard de admin
         else:
             return redirect(url_for('statistics'))  # Redirige al dashboard de usuario
 

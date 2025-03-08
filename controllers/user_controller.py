@@ -1,7 +1,5 @@
-#controller/user_controller.py
-
 from flask import session, render_template, request, redirect, url_for, flash
-from auth.auth import Auth, User 
+from auth.auth import Auth, User
 
 class UserController:
     @staticmethod
@@ -12,7 +10,6 @@ class UserController:
         if session['user'].get('role') != 'admin':
             return redirect(url_for('forbidden_error'))
 
-        # Obtener usuarios activos e inactivos
         usuarios_activos = User.get_user()
         disabled_users = User.get_disabled_users()
         
@@ -24,10 +21,11 @@ class UserController:
             return redirect(url_for('login'))
         
         if session['user'].get('role') != 'admin':
-            return redirect(url_for('forbidden_error'))  # Redirigir al error 403
+            return redirect(url_for('forbidden_error'))
         
         if request.method == 'POST':
             username = request.form['username']
+            email = request.form['email']
             password = request.form['password']
             role = request.form['role']
             User.insert_user(username, password, role)
@@ -42,17 +40,21 @@ class UserController:
             return redirect(url_for('login'))
         
         if session['user'].get('role') != 'admin':
-            return redirect(url_for('forbidden_error'))  # Redirigir al error 403
+            return redirect(url_for('forbidden_error'))
 
         user = User.get_user_by_id(user_id)
+        if not user:
+            flash('Usuario no encontrado', 'error')
+            return redirect(url_for('admin_dashboard'))
+
         if request.method == 'POST':
             username = request.form['username']
             role = request.form['role']
             password = request.form['password'] if request.form['password'] else None
-        
-            User.update_user(user_id, username, password, role)  # Modifica la función para aceptar None y no cambiar la contraseña si es vacío
+            User.update_user(user_id, username, password, role)
             flash('Usuario actualizado exitosamente', 'success')
             return redirect(url_for('admin_dashboard'))
+        
         return render_template('admin/edit_user.html', user=user)
 
     @staticmethod
@@ -75,7 +77,7 @@ class UserController:
         if session['user'].get('role') != 'admin':
             return redirect(url_for('forbidden_error'))
         
-        User.enable_user_in_db(user_id)
+        User.activate_user(user_id)
         flash("Usuario activado correctamente.", "success")
         return redirect(url_for('admin_dashboard'))
     
@@ -87,6 +89,6 @@ class UserController:
         if session['user'].get('role') != 'admin':
             return redirect(url_for('forbidden_error'))
         
-        User.disable_user_in_db(user_id)
+        User.deactivate_user(user_id)
         flash("Usuario desactivado correctamente.", "danger")
         return redirect(url_for('admin_dashboard'))
