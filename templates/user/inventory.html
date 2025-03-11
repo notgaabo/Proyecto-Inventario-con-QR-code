@@ -1,44 +1,197 @@
 {% extends 'includes/base_user.html' %}
 
 {% block content %}
-    <!-- External CSS and JS Libraries -->
+<!-- Include Tailwind CSS and Flowbite from CDN -->
+<link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
 
-    <body class="bg-gray-50 font-sans min-h-screen flex flex-col">
-        <div class="container mx-auto p-6 lg:p-8 flex-grow">
-            <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-900 tracking-tight">
-                <i class="fas fa-warehouse mr-2 text-orange-600"></i>Sistema de Almacenamiento QR
-            </h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Escáner QR -->
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
-                    <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-qrcode mr-2 text-orange-500"></i>Escanear Código QR
-                    </h2>
-                    <div id="qr-reader" class="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden"></div>
-                    <div id="qr-result" class="text-center text-lg font-medium text-gray-700 italic"></div>
-                </div>
+<div class="bg-gray-50 font-sans min-h-screen flex flex-col">
+    <div class="container mx-auto p-6 lg:p-8 flex-grow">
+        <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-900 tracking-tight">
+            <i class="fas fa-warehouse mr-2 text-orange-600"></i>Sistema de Almacenamiento QR
+        </h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- QR Scanner -->
+            <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-qrcode mr-2 text-orange-500"></i>Escanear Código QR
+                </h2>
+                <div id="qr-reader" class="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden"></div>
+                <div id="qr-result" class="text-center text-lg font-medium text-gray-700 italic"></div>
+            </div>
 
-                <!-- Carrito (renombrado a Registro de Salida) -->
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
-                    <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-box-open mr-2 text-orange-500"></i>Registro de Salida
-                    </h2>
-                    <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        <!-- Items del carrito se cargarán dinámicamente -->
-                    </div>
-                    <div class="mt-6 border-t border-gray-200 pt-4">
-                        <p id="cart_total" class="font-semibold text-lg text-gray-800">Total Registrado: $0.00</p>
-                        <button id="checkout_btn" 
-                                class="mt-4 w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium shadow-sm">
-                            <i class="fas fa-check-circle mr-2"></i>Confirmar Salida
-                        </button>
-                    </div>
+            <!-- Checkout Section -->
+            <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-box-open mr-2 text-orange-500"></i>Registro de Salida
+                </h2>
+                <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"></div>
+                <div class="mt-6 border-t border-gray-200 pt-4">
+                    <p id="cart_total" class="font-semibold text-lg text-gray-800">Total Registrado: $0.00</p>
+                    <button id="checkout_btn" 
+                            data-modal-target="checkout-modal" 
+                            data-modal-toggle="checkout-modal" 
+                            class="mt-4 w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition duration-200 font-medium shadow-sm">
+                        <i class="fas fa-check-circle mr-2"></i>Confirmar Salida
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Flask Static File Integration -->
-        <script src="{{ url_for('static', filename='js/qr.js') }}"></script>
-    </body>
+    <!-- Flowbite Modal -->
+    <div id="checkout-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="fixed inset-0 bg-black bg-opacity-30" aria-hidden="true"></div>
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700 z-10">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                        <i class="fas fa-receipt mr-2 text-orange-500"></i>Detalle de Salida
+                    </h3>
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="checkout-modal">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Cerrar modal</span>
+                    </button>
+                </div>
+                <div class="p-4 md:p-5">
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold mb-3 border-b border-gray-200 pb-2">Productos Seleccionados</h4>
+                        <div id="modal_products" class="space-y-3 max-h-60 overflow-y-auto pr-2"></div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span id="modal_subtotal" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-gray-600">ITBIS (18%):</span>
+                            <span id="modal_tax" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t border-gray-300 pt-2 mt-2">
+                            <span>Total a Pagar:</span>
+                            <span id="modal_total" class="text-orange-600">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                    <button data-modal-hide="checkout-modal" type="button" class="text-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 border border-gray-300">Cancelar</button>
+                    <button id="confirm_checkout" type="button" class="text-white bg-orange-500 font-medium rounded-lg text-sm px-5 py-2.5 border-0 shadow-md w-full active:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50">
+                        Confirmar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flask Static File Integration -->
+    <script src="{{ url_for('static', filename='js/qr.js') }}"></script>
+
+    <!-- Modal and Checkout Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkoutBtn = document.getElementById('checkout_btn');
+            const confirmCheckoutBtn = document.getElementById('confirm_checkout');
+
+            const updateCartTotal = () => {
+                const cartItems = document.querySelectorAll('#cart_items > div');
+                let total = 0;
+                cartItems.forEach(item => {
+                    const priceMatch = item.querySelector('.text-gray-600')?.textContent.match(/\$([\d.]+)/);
+                    const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                    const quantity = parseInt(item.querySelector('input')?.value) || 0;
+                    total += price * quantity;
+                });
+                document.getElementById('cart_total').textContent = `Total Registrado: $${total.toFixed(2)}`;
+            };
+
+            const loadCartData = () => {
+                const cartItems = document.querySelectorAll('#cart_items > div');
+                const modalProducts = document.getElementById('modal_products');
+                modalProducts.innerHTML = '';
+                let subtotal = 0;
+
+                if (cartItems.length === 0) {
+                    modalProducts.innerHTML = '<p class="text-gray-500">No hay productos en el carrito.</p>';
+                } else {
+                    cartItems.forEach(item => {
+                        const priceMatch = item.querySelector('.text-gray-600')?.textContent.match(/\$([\d.]+)/);
+                        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                        const quantity = parseInt(item.querySelector('input')?.value) || 0;
+                        const itemSubtotal = price * quantity;
+                        subtotal += itemSubtotal;
+
+                        const productName = item.querySelector('.font-semibold')?.textContent || 'Producto desconocido';
+                        const productElement = document.createElement('div');
+                        productElement.className = 'flex justify-between items-center';
+                        productElement.innerHTML = `
+                            <span class="text-gray-800">${productName} (x${quantity})</span>
+                            <span class="font-medium">$${itemSubtotal.toFixed(2)}</span>
+                        `;
+                        modalProducts.appendChild(productElement);
+                    });
+                }
+
+                const tax = subtotal * 0.18;
+                const total = subtotal + tax;
+
+                document.getElementById('modal_subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                document.getElementById('modal_tax').textContent = `$${tax.toFixed(2)}`;
+                document.getElementById('modal_total').textContent = `$${total.toFixed(2)}`;
+            };
+
+            checkoutBtn.addEventListener('click', () => {
+                loadCartData();
+            });
+
+            confirmCheckoutBtn.addEventListener('click', async () => {
+                const cartItems = document.querySelectorAll('#cart_items > div');
+                const itemsToSend = [];
+
+                cartItems.forEach(item => {
+                    const productId = item.dataset.productId;
+                    const quantity = parseInt(item.querySelector('input')?.value) || 0;
+                    const priceMatch = item.querySelector('.text-gray-600')?.textContent.match(/\$([\d.]+)/);
+                    const salePrice = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                    const profit = salePrice * 0.20;
+
+                    if (productId && quantity > 0 && salePrice > 0) {
+                        itemsToSend.push({ product_id: productId, quantity, sale_price: salePrice, profit });
+                    }
+                });
+
+                if (itemsToSend.length === 0) {
+                    alert('No hay productos válidos para registrar.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/register_sale', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: itemsToSend })
+                    });
+
+                    const data = await response.json();
+                    if (data.message) {
+                        document.getElementById('cart_items').innerHTML = '';
+                        document.getElementById('cart_total').textContent = 'Total Registrado: $0.00';
+                        document.getElementById('checkout-modal').classList.add('hidden');
+                        alert('Venta registrada con éxito');
+                        updateCartTotal();
+                    } else {
+                        alert('Error al registrar la venta: ' + (data.error || 'Desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error al registrar la venta:', error);
+                    alert('Ocurrió un error al procesar la solicitud.');
+                }
+            });
+
+            // Listen for cart updates from qr.js
+            document.addEventListener('cartUpdated', updateCartTotal);
+        });
+    </script>
+</div>
 {% endblock %}
