@@ -14,15 +14,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <section class="w-full max-w-sm bg-white p-6 rounded-lg shadow-lg">
+<body class="bg-gray-100 flex items-center justify-center h-screen relative">
+    <!-- Login Section -->
+    <section class="w-full max-w-sm bg-white p-6 rounded-lg shadow-lg relative z-10">
         <div class="text-center">
             <img class="w-40 h-auto mx-auto" src="../static/img/1.png" alt="Logo StockBeam">
             <h3 class="mt-3 text-2xl font-semibold text-gray-700">Bienvenido</h3>
             <p class="mt-1 text-gray-500">Inicia sesión en StockBeam</p>
         </div>
 
-        <form action="/login" method="POST" class="mt-6">
+        <form id="loginForm" action="/login" method="POST" class="mt-6">
             <div>
                 <input type="text" name="username" placeholder="Username" 
                     class="block w-full px-4 py-2 mt-2 text-gray-700 bg-white border rounded-lg focus:border-orange-500 focus:ring-orange-300 focus:outline-none focus:ring focus:ring-opacity-40"
@@ -36,13 +37,98 @@
             </div>
 
             <div class="flex items-center justify-center mt-6">
-                <button type="submit" 
+                <button type="submit" id="submitBtn" 
                     class="w-full px-4 py-2 text-white bg-orange-500 rounded-lg shadow-md hover:bg-orange-600 transition duration-300">
                     Sign In
                 </button>
             </div>
         </form>
     </section>
+
+    <!-- Loader (Pantalla Completa) -->
+    <div id="loader" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+        <div class="w-12 h-12 border-4 border-t-4 border-orange-500 border-solid rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Flash Messages (Bottom Center) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-full max-w-md space-y-2 z-50">
+            {% for category, message in messages %}
+                <div id="alert-{{ loop.index }}" class="rounded-lg border p-4 shadow-md {% if category == 'success' %}bg-green-500 text-white border-green-600{% elif category == 'error' %}bg-red-500 text-white border-red-600{% elif category == 'warning' %}bg-yellow-500 text-black border-yellow-600{% elif category == 'info' %}bg-blue-500 text-white border-blue-600{% else %}bg-red-500 text-white border-red-600{% endif %} flex items-center">
+                    <div class="flex items-center">
+                        {% if category == 'success' %}
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        {% elif category == 'error' %}
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                        {% elif category == 'warning' %}
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        {% elif category == 'info' %}
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- JavaScript for Auto-Dismissal and Loader -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const alerts = document.querySelectorAll('[id^="alert-"]');
+        alerts.forEach(function (alert) {
+            setTimeout(function () {
+                if (alert) {
+                    alert.remove();
+                }
+            }, 2000); // 2 seconds
+        });
+
+        // Manejo del formulario y loader
+        const form = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loader = document.getElementById('loader');
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault(); // Evita el envío inmediato para mostrar el loader
+
+            // Mostrar loader y deshabilitar botón
+            loader.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                // Simulación de una solicitud al servidor (reemplaza con tu fetch o axios)
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Simula 2 segundos de espera
+                
+                // Enviar el formulario manualmente si todo está bien
+                form.submit(); // Esto enviará los datos a "/login"
+            } catch (error) {
+                console.error('Error en la verificación:', error);
+                // Aquí podrías mostrar un mensaje de error si lo deseas
+            } finally {
+                // Ocultar loader y restaurar botón
+                loader.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    });
+    </script>
 </body>
 
 </html>

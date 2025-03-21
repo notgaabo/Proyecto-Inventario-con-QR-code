@@ -1,5 +1,6 @@
 from flask import session, render_template, request, redirect, url_for, flash
 from auth.auth import User
+from db.config import Config
 
 class UserController:
     @staticmethod
@@ -19,20 +20,30 @@ class UserController:
     def create_user():
         if 'user' not in session:
             return redirect(url_for('login'))
-        
+
         if session['user'].get('role') != 'admin':
             return redirect(url_for('forbidden_error'))
-        
+
+        db = Config.get_db_connection()  # Database connection
+        cursor = db.cursor(dictionary=True)
+
+        # Fetch roles from the database
+        cursor.execute("SELECT id, name FROM roles")
+        roles = cursor.fetchall()
+
         if request.method == 'POST':
             username = request.form['username']
             email = request.form['email']
             password = request.form['password']
-            role = request.form['role']
-            User.insert_user(username, password, role)
+            role_id = request.form['role']  # Matches name="id" in the form
+            
+            User.insert_user(username, email, password, role_id)  # Insert user with role_id
+            
             flash('Usuario creado exitosamente', 'success')
             return redirect(url_for('admin_dashboard'))
-        
-        return render_template('admin/user_create.html')
+
+        return render_template('admin/user_create.html', roles=roles)
+
 
     @staticmethod
     def edit_user(user_id):

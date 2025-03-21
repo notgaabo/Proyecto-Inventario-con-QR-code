@@ -94,7 +94,8 @@ async function updateCart() {
             });
 
             document.getElementById('cart_items').innerHTML = html || '<p class="text-gray-500">Registro vacío</p>';
-            document.dispatchEvent(new Event('cartUpdated')); // Trigger update in main script
+            document.getElementById('cart_total').textContent = `Total Registrado: $${total.toFixed(2)}`;
+            document.dispatchEvent(new Event('cartUpdated'));
         } else {
             document.getElementById('cart_items').innerHTML = 
                 `<p class="text-red-600">Error al cargar el registro: ${result.message}</p>`;
@@ -125,7 +126,7 @@ async function updateQuantity(productId, quantity) {
     }
 }
 
-// Initial load (optional, remove if not needed)
+// Inicializar el carrito al cargar la página
 window.onload = () => {
     updateCart();
 };

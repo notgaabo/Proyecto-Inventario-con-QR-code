@@ -12,9 +12,15 @@ class Auth:
         
         if user:
             if user['is_active'] == 0:
+                cursor.close()
+                connection.close()
                 return 'disabled'  # Usuario deshabilitado
             if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                cursor.close()
+                connection.close()
                 return user
+        cursor.close()
+        connection.close()
         return None
 
     @staticmethod
@@ -22,7 +28,7 @@ class Auth:
         session['user'] = {
             'id': user['id'],
             'username': user['username'],
-            'role': user['role'],
+            'role': user['role'],  # Use role (varchar) from users table
         }
         print(session)
 
@@ -36,14 +42,19 @@ class Auth:
 
 class User:
     @staticmethod
-    def insert_user(username, email, password, role):
+    def insert_user(username, email, password, role_id):
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         connection = Config.get_db_connection()
         cursor = connection.cursor()
+        # Fetch role name and consume result
+        cursor.execute("SELECT name FROM roles WHERE id = %s", (role_id,))
+        role_row = cursor.fetchone()
+        role = role_row[0] if role_row else None
+        # Ensure no unread results by consuming or using a new cursor
         cursor.execute("""
-            INSERT INTO users (username, email, password, role)
-            VALUES (%s, %s, %s, %s)
-        """, (username, email, hashed_password, role))
+            INSERT INTO users (username, email, password, role, role_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (username, email, hashed_password, role, role_id))  # Fixed placeholder count
         connection.commit()
         cursor.close()
         connection.close()
@@ -52,7 +63,7 @@ class User:
     def get_user():
         connection = Config.get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE is_active = 1")  # Filtramos solo los usuarios activos
+        cursor.execute("SELECT * FROM users WHERE is_active = 1")
         users = cursor.fetchall()
         cursor.close()
         connection.close()
@@ -69,22 +80,25 @@ class User:
         return user
 
     @staticmethod
-    def update_user(user_id, username, email, password, role):
+    def update_user(user_id, username, email, password, role_id):
         connection = Config.get_db_connection()
         cursor = connection.cursor()
+        cursor.execute("SELECT name FROM roles WHERE id = %s", (role_id,))
+        role_row = cursor.fetchone()
+        role = role_row[0] if role_row else None
         if password:
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
             cursor.execute("""
                 UPDATE users
-                SET username = %s, email = %s, password = %s, role = %s
+                SET username = %s, email = %s, password = %s, role = %s, role_id = %s
                 WHERE id = %s
-            """, (username, email, hashed_password, role, user_id))
+            """, (username, email, hashed_password, role, role_id, user_id))
         else:
             cursor.execute("""
                 UPDATE users
-                SET username = %s, role = %s
+                SET username = %s, email = %s, role = %s, role_id = %s
                 WHERE id = %s
-            """, (username, role, user_id))
+            """, (username, email, role, role_id, user_id))
         connection.commit()
         cursor.close()
         connection.close()
@@ -93,7 +107,7 @@ class User:
     def get_disabled_users():
         connection = Config.get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE is_active = 0")  # Filtramos solo los usuarios desactivados
+        cursor.execute("SELECT * FROM users WHERE is_active = 0")
         disabled_users = cursor.fetchall()
         cursor.close()
         connection.close()
@@ -123,7 +137,6 @@ class User:
         cursor = connection.cursor(dictionary=True)
         cursor.execute("SELECT is_active FROM users WHERE id = %s", (user_id,))
         user = cursor.fetchone()
-
         if user:
             new_status = 0 if user["is_active"] == 1 else 1
             cursor.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_status, user_id))

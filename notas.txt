@@ -36,26 +36,11 @@ detallada sobre el producto o venta.
 Verificación Rápida: Permite a los usuarios verificar rápidamente el estado de una venta o producto 
 mediante el escaneo del código QR.
 
-PUNTO 8 IA 
-
-para la implementacion puedo usar modelos de aprendizaje para la demanda futura de productos basandose 
-en la historia tendencias del mercado puedo usar bibliotecas como scikit-learn o tensorflow para entrenar
-modelos de prediccion con datos de la venta
-
-detencion de anomalias como patrones inusuales en el inventario, robos, errores de conteo o problemas de calidad
-para esto podemos usar isolation-forest o autoencoders 
-
-PUNTO 9 ASISTENTE VIRTUAL 
-
-Utilizar dialogflow, rasa o GPT 3 para crear un asistente convencional que se inrefre con tu plataforma de inventario
-
-8 ver GPT
-
-PUNTO 10 hashear las constrasenas
+PUNTO 8 hashear las constrasenas
 
 Debo hashear las constrasenas para mayor seguridad en mi plataforma
 
-PUNTO 11 GENERACION DE QR PARA VENTAS A FUTURO
+PUNTO 9 GENERACION DE QR PARA VENTAS A FUTURO
 
 debo generar QR con los productos que tengo registrados en mi almacen pueda digamos sacar el codigo QR
 pegarlo a la manzana y que al momento que llegue un usuario se registre en la factuera y hacer el pago

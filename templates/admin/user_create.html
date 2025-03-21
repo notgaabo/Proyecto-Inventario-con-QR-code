@@ -34,10 +34,10 @@
                     <label for="role" class="block text-gray-700 font-semibold">Seleccionar Rol</label>
                     <select id="role" name="role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-400 focus:border-orange-400 block w-full p-2.5">
                         <option selected>Seleccione un rol</option>
-                        {% for role in ['admin', 'user'] %}
-                        <option value="{{ role }}">{{ 'Administrador' if role == 'admin' else 'Usuario' }}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.id }}">{{ role.name }}</option>
                         {% endfor %}
-                    </select>
+                    </select>                    
                 </div>
                 <button type="submit"
                     class="w-full bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition">

@@ -1,0 +1,21 @@
+# Entorno de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de configuración y credenciales
+config.py
+*.env
+
+# Logs y archivos temporales
+*.log
+*.pid
+*.session
+
+# Reportes y archivos generados
+*.pdf
+*.csv
+
+# Códigos QR generados
+qrcodes/
