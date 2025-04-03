@@ -10,6 +10,7 @@ from controllers.product_controller import ProductController
 from controllers.qr_controller import QrController, LectorController
 from controllers.sales_controller import SalesController
 from controllers.company_controller import CompanyController
+from controllers.order_controller import OrderController
 
 class InventoryApp(Flask):
     def __init__(self):
@@ -48,6 +49,7 @@ class InventoryApp(Flask):
         # Rutas de estadísticas (gerente y admin)
         self.add_url_rule('/statistics', 'statistics', StatisticsController.statistics)
         self.add_url_rule('/statistics/chart', 'statistics_chart', StatisticsController.statistics)
+        self.add_url_rule('/filter-sales', 'filer_sales', StatisticsController.filter_sales, methods=['GET'])
 
         # Rutas de productos (encargado de almacén, gerente, admin)
         self.add_url_rule('/product', 'product_list', ProductController.get_product_list, methods=['GET'])
@@ -64,8 +66,19 @@ class InventoryApp(Flask):
         self.add_url_rule('/checkout', 'checkout', LectorController.checkout, methods=['POST'])  # Añadida
         self.add_url_rule('/generate_qr/<int:product_id>', 'generate_qr', QrController.generate_qr)  # Añadida
 
+        # Ruta de las ordenes de empresas 
+                # Assuming this is in your Flask app initialization (e.g., app.py or similar)
+        self.add_url_rule('/create_order', 'create_order', OrderController.create_order, methods=['GET', 'POST'])
+        self.add_url_rule('/orders', 'order_list', OrderController.order_list, methods=['GET'])
+        self.add_url_rule('/orders/receive_multiple', 'receive_multiple_orders', OrderController.receive_multiple_orders, methods=['POST'])  # New route
+        self.add_url_rule('/orders/<int:order_id>', 'view_order', OrderController.view_order, methods=['GET'])
+        self.add_url_rule('/get_order_details/<int:order_id>', 'get_order_details', OrderController.get_order_details, methods=['GET'])
+        # Optional: Keep this if you still need single-order receiving elsewhere
+        self.add_url_rule('/receive_order', 'receive_order', OrderController.receive_order, methods=['GET', 'POST'])
+        
         # Rutas de ventas (todos los roles autenticados)
         self.add_url_rule('/register_sale', 'register_sale', SalesController.register_sale, methods=['POST'])
+        self.add_url_rule('/sales_history', 'sales_history', ProductController.sales_history, methods=['GET'])
 
         # Gestión de empresas (solo admin)
         self.add_url_rule('/manage_companies', 'manage_companies', CompanyController.manage_companies, methods=['GET'])

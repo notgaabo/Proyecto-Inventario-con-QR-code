@@ -33,7 +33,7 @@
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-500">Todas Las Categorías</span>
-                    <span class="text-2xl font-medium text-gray-800">{{ stats['all_item_groups'] | default(0) }}</span>
+                    <span class="text-2xl font-medium text-gray-800">{{ stats['all_categories'] | default(0) }}</span> <!-- Corregido de 'all_item_groups' a 'all_categories' -->
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-500">Todos Los Productos</span>
@@ -48,12 +48,11 @@
                 <h2 class="text-xl font-medium text-gray-800">Productos Más Vendidos</h2>
                 <div class="relative">
                     <button id="dropdownButton" class="flex items-center text-gray-800 font-medium">
-                        <span id="selectedPeriod">{{ time_period | default('Último Mes') }}</span>
+                        <span id="selectedPeriod">Último Mes</span> <!-- Valor por defecto -->
                         <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <!-- Dropdown con IDs y data-period -->
                     <div id="timePeriodDropdown" class="absolute right-0 mt-2 bg-white text-gray-800 border border-gray-300 rounded-lg shadow-lg hidden z-10">
                         <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-period="week">Última Semana</a>
                         <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-period="month">Último Mes</a>
@@ -132,7 +131,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
         .then(data => {
             // Actualizar el contenedor de productos más vendidos
             updateTopProducts(data.products);
@@ -173,6 +177,9 @@ document.addEventListener('DOMContentLoaded', function () {
             dropdownMenu.classList.add('hidden');
         }
     });
+
+    // Cargar los datos iniciales con "Último Mes"
+    fetchFilteredData('month');
 });
 </script>
-{% endblock %}  
+{% endblock %}

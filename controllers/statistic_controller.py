@@ -1,8 +1,7 @@
 # controllers/statistic_controller.py
-
 import plotly.graph_objs as go
 import plotly.io as pio
-from flask import render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, abort, jsonify, request
 from db.config import Config
 from datetime import datetime, timedelta
 
@@ -14,12 +13,12 @@ class StatisticsController:
             return redirect(url_for('login'))
 
         # Restrict access to managers only
-        if session['user']['role'] != 'manager':
+        if session['user']['role'] != 'gerente':
             return redirect(url_for('forbidden_error'))
 
         stats = StatisticsController.get_sales_data()
         chart_html = StatisticsController.generate_chart(stats)
-        top_products = StatisticsController.get_top_products()
+        top_products = StatisticsController.get_top_products('month')  # Default a mes
         return render_template("user/statistics.html", chart=chart_html, stats=stats, products=top_products)
 
     @staticmethod
@@ -34,16 +33,16 @@ class StatisticsController:
                 "all_items": 0,
                 "all_categories": 0,
                 "period_stats": {
-                    "week1": {"sales": 0, "transactions": 0, "profit": 0},
-                    "month": {"sales": 0, "transactions": 0, "profit": 0},
-                    "quarter": {"sales": 0, "transactions": 0, "profit": 0}
+                    "semana": {"sales": 0, "transactions": 0, "profit": 0},
+                    "mes": {"sales": 0, "transactions": 0, "profit": 0},
+                    "trimestre": {"sales": 0, "transactions": 0, "profit": 0}
                 }
             }
 
-        company_id = session['user']['company_id']  # Matches users.company_id
+        company_id = session['user']['company_id']
         try:
             with Config.get_db_connection() as connection:
-                with connection.cursor(dictionary=True) as cursor:  # Updated to dictionary=True
+                with connection.cursor(dictionary=True) as cursor:
                     query = """
                         SELECT 
                             s.sale_date,
@@ -54,13 +53,13 @@ class StatisticsController:
                             (SELECT COUNT(DISTINCT category) FROM products WHERE company_id = %s) AS all_categories
                         FROM sales s
                         JOIN products p ON s.product_id = p.id
-                        WHERE s.company_id = %s  -- Updated to filter sales by company_id
+                        WHERE s.company_id = %s
                         ORDER BY s.sale_date ASC
                     """
                     cursor.execute(query, (company_id, company_id, company_id, company_id))
                     results = cursor.fetchall()
         except Exception as e:
-            print(f"Error fetching sales data: {str(e)}")  # Replace with proper logging in production
+            print(f"Error fetching sales data: {str(e)}")
             return {
                 "total_sales": 0,
                 "total_transactions": 0,
@@ -69,16 +68,16 @@ class StatisticsController:
                 "all_items": 0,
                 "all_categories": 0,
                 "period_stats": {
-                    "week1": {"sales": 0, "transactions": 0, "profit": 0},
-                    "month": {"sales": 0, "transactions": 0, "profit": 0},
-                    "quarter": {"sales": 0, "transactions": 0, "profit": 0}
+                    "semana": {"sales": 0, "transactions": 0, "profit": 0},
+                    "mes": {"sales": 0, "transactions": 0, "profit": 0},
+                    "trimestre": {"sales": 0, "transactions": 0, "profit": 0}
                 }
             }
 
         period_stats = {
-            "week1": {"sales": 0, "transactions": 0, "profit": 0},
-            "month": {"sales": 0, "transactions": 0, "profit": 0},
-            "quarter": {"sales": 0, "transactions": 0, "profit": 0}
+            "semana": {"sales": 0, "transactions": 0, "profit": 0},
+            "mes": {"sales": 0, "transactions": 0, "profit": 0},
+            "trimestre": {"sales": 0, "transactions": 0, "profit": 0}
         }
         
         total_sales = 0
@@ -86,86 +85,83 @@ class StatisticsController:
         total_profit = 0
         
         if results:
-            first_date = results[0]['sale_date']  # Updated to dictionary access
+            now = datetime.now()
             for result in results:
                 sale_date = result['sale_date']
                 sale_amount = result['sale_amount']
                 profit = result['profit']
-                days_diff = (sale_date - first_date).days
+                days_diff = (now - sale_date).days
                 
                 total_sales += sale_amount
                 total_transactions += 1
                 total_profit += profit
                 
                 if days_diff <= 7:
-                    period_stats["week1"]["sales"] += sale_amount
-                    period_stats["week1"]["transactions"] += 1
-                    period_stats["week1"]["profit"] += profit
-                    period_stats["month"]["sales"] += sale_amount
-                    period_stats["month"]["transactions"] += 1
-                    period_stats["month"]["profit"] += profit
-                elif days_diff <= 85:
-                    period_stats["month"]["sales"] += sale_amount
-                    period_stats["month"]["transactions"] += 1
-                    period_stats["month"]["profit"] += profit
-                else:
-                    period_stats["quarter"]["sales"] += sale_amount
-                    period_stats["quarter"]["transactions"] += 1
-                    period_stats["quarter"]["profit"] += profit
+                    period_stats["semana"]["sales"] += sale_amount
+                    period_stats["semana"]["transactions"] += 1
+                    period_stats["semana"]["profit"] += profit
+                if days_diff <= 30:
+                    period_stats["mes"]["sales"] += sale_amount
+                    period_stats["mes"]["transactions"] += 1
+                    period_stats["mes"]["profit"] += profit
+                if days_diff <= 90:
+                    period_stats["trimestre"]["sales"] += sale_amount
+                    period_stats["trimestre"]["transactions"] += 1
+                    period_stats["trimestre"]["profit"] += profit
 
         return {
             "total_sales": total_sales,
             "total_transactions": total_transactions,
             "total_profit": total_profit,
-            "low_stock_items": results[0]['low_stock_items'] if results else 0,  #\intUpdated to dictionary access
-            "all_items": results[0]['all_items'] if results else 0,  # Updated to dictionary access
-            "all_categories": results[0]['all_categories'] if results else 0,  # Updated to dictionary access
+            "low_stock_items": results[0]['low_stock_items'] if results else 0,
+            "all_items": results[0]['all_items'] if results else 0,
+            "all_categories": results[0]['all_categories'] if results else 0,
             "period_stats": period_stats
         }
 
     @staticmethod
     def generate_chart(stats):
         """Generate the statistics chart using Plotly."""
-        categories = ['Week 1', 'Month', 'Quarter']
+        categories = ['Última Semana', 'Último Mes', 'Último Trimestre']
         period_stats = stats["period_stats"]
 
         values_sales = [
-            period_stats["week1"]["sales"],
-            period_stats["month"]["sales"],
-            period_stats["quarter"]["sales"]
+            period_stats["semana"]["sales"],
+            period_stats["mes"]["sales"],
+            period_stats["trimestre"]["sales"]
         ]
         values_transactions = [
-            period_stats["week1"]["transactions"],
-            period_stats["month"]["transactions"],
-            period_stats["quarter"]["transactions"]
+            period_stats["semana"]["transactions"],
+            period_stats["mes"]["transactions"],
+            period_stats["trimestre"]["transactions"]
         ]
         values_profit = [
-            period_stats["week1"]["profit"],
-            period_stats["month"]["profit"],
-            period_stats["quarter"]["profit"]
+            period_stats["semana"]["profit"],
+            period_stats["mes"]["profit"],
+            period_stats["trimestre"]["profit"]
         ]
 
         fig = go.Figure()
 
         fig.add_trace(go.Bar(
             y=categories, x=values_sales, orientation='h',
-            name='Sales', marker=dict(color='#4CAF50')
+            name='Ventas', marker=dict(color='#4CAF50')
         ))
 
         fig.add_trace(go.Bar(
             y=categories, x=values_transactions, orientation='h',
-            name='Transactions', marker=dict(color='#2196F3')
+            name='Transacciones', marker=dict(color='#2196F3')
         ))
 
         fig.add_trace(go.Bar(
             y=categories, x=values_profit, orientation='h',
-            name='Profit', marker=dict(color='#FF9800')
+            name='Ganancias', marker=dict(color='#FF9800')
         ))
 
         fig.update_layout(
-            title="Sales Statistics",
-            xaxis_title="Amount",
-            yaxis_title="Period",
+            title="Estadísticas de Ventas",
+            xaxis_title="Monto",
+            yaxis_title="Período",
             template="plotly",
             barmode='group'
         )
@@ -173,23 +169,30 @@ class StatisticsController:
         return pio.to_html(fig, full_html=False)
 
     @staticmethod
-    def get_top_products():
-        """Retrieve the top-selling products."""
+    def get_top_products(period='month'):
+        """Retrieve the top-selling products based on a time period."""
         if 'user' not in session:
             return []
-        
-        company_id = session['user']['company_id']  # Matches users.company_id
+
+        company_id = session['user']['company_id']
         try:
             with Config.get_db_connection() as connection:
-                with connection.cursor(dictionary=True) as cursor:  # Updated to dictionary=True
-                    query = """
+                with connection.cursor(dictionary=True) as cursor:
+                    if period == 'week':
+                        time_filter = "AND s.sale_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+                    elif period == 'quarter':
+                        time_filter = "AND s.sale_date >= DATE_SUB(NOW(), INTERVAL 3 MONTH)"
+                    else:  # Default to month
+                        time_filter = "AND s.sale_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)"
+
+                    query = f"""
                         SELECT 
                             p.name,
                             p.image,
                             SUM(s.quantity) AS total_sales
                         FROM products p
                         LEFT JOIN sales s ON p.id = s.product_id
-                        WHERE p.company_id = %s
+                        WHERE p.company_id = %s {time_filter}
                         GROUP BY p.id, p.name, p.image
                         ORDER BY total_sales DESC
                         LIMIT 3
@@ -206,5 +209,19 @@ class StatisticsController:
                         for row in results
                     ]
         except Exception as e:
-            print(f"Error fetching top products: {str(e)}")  # Replace with proper logging in production
+            print(f"Error fetching top products: {str(e)}")
             return []
+
+    @staticmethod
+    def filter_sales():
+        """Endpoint to filter top-selling products by period."""
+        if 'user' not in session:
+            return redirect(url_for('login'))
+
+        # Restrict access to managers only
+        if session['user']['role'] != 'gerente':
+            return redirect(url_for('forbidden_error'))
+
+        period = request.args.get('period', 'month')
+        top_products = StatisticsController.get_top_products(period)
+        return jsonify({'products': top_products})

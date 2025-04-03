@@ -45,7 +45,7 @@ class ProductController:
         except Exception as e:
             print(f"Error al conectar a la base de datos: {str(e)}")
             raise
-
+        
     @staticmethod
     def get_product_list():
         """Lista los productos de la compañía del usuario autenticado con información del proveedor."""
@@ -59,15 +59,19 @@ class ProductController:
 
         try:
             connection = ProductController._get_db_connection()
+            if not connection.is_connected():
+                raise Exception("No se pudo conectar a la base de datos")
+
             with connection.cursor(dictionary=True) as cursor:
-                cursor.execute("""
+                query = """
                     SELECT p.id, p.name, p.category, p.price, p.stock, p.cost_price, p.image, 
                            p.supplier_id, p.company_id, s.name as supplier_name
                     FROM products p
                     LEFT JOIN suppliers s ON p.supplier_id = s.id
                     WHERE p.company_id = %s
                     ORDER BY p.id DESC
-                """, (company_id,))
+                """
+                cursor.execute(query, (company_id,))
                 products = cursor.fetchall()
             
             response = make_response(render_template('products/product_list.html', products=products))
@@ -81,6 +85,7 @@ class ProductController:
             if 'connection' in locals():
                 connection.close()
 
+    # Resto de los métodos de ProductController (add_product, update_product, delete_product, etc.)
     @staticmethod
     def add_product():
         """Agrega un nuevo producto con validación, imagen y proveedor."""

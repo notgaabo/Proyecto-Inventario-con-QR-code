@@ -1,0 +1,134 @@
+{% extends 'includes/base_user.html' %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: 'Arial', sans-serif; color: #333;">
+    <h1 style="color: #000; text-align: center; margin-bottom: 30px; font-size: 28px; border-bottom: 3px solid #FF8C00; padding-bottom: 10px;">Registrar Nueva Orden</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for category, message in messages %}
+                    <!-- <p class="{{ category }}" style="padding: 10px; background-color: {% if category == 'success' %}#d4edda{% elif category == 'error' %}#f8d7da{% else %}#cce5ff{% endif %}; border-radius: 5px; margin: 5px 0;">{{ message }}</p> -->
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" style="background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #000;">Proveedor:</label>
+            <select name="supplier_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; color: #333; font-size: 16px;">
+                <option value="">Selecciona un proveedor</option>
+                {% for supplier in suppliers %}
+                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #000;">Productos:</label>
+            <div id="items" style="border: 1px solid #eee; padding: 15px; border-radius: 4px; background-color: #fafafa;">
+                <div class="item-row" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #eee; display: flex; align-items: center;">
+                    <select name="items[0][product_id]" required style="width: 60%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px; background-color: #fff; color: #333; font-size: 16px;">
+                        <option value="">Selecciona un producto</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="items[0][quantity]" min="1" required placeholder="Cantidad" style="width: 25%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; color: #333; font-size: 16px; margin-right: 10px;">
+                    <button type="button" class="delete-btn" onclick="deleteItem(this)" style="visibility: hidden; background-color: transparent; border: none; cursor: pointer; color: #f44336; padding: 5px; border-radius: 4px;" title="Eliminar producto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <button type="button" onclick="addItem()" style="background-color: #fff; color: #FF8C00; border: 1px solid #FF8C00; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold; transition: all 0.3s ease;">
+                + Agregar otro producto
+            </button>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="submit" style="background-color: #FF8C00; color: white; border: none; padding: 12px 30px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(255,140,0,0.3);">
+                Registrar Orden
+            </button>
+        </div>
+    </form>
+
+    <script>
+        let itemCount = 1;
+        
+        function addItem() {
+            const itemsDiv = document.getElementById('items');
+            const newItem = document.createElement('div');
+            newItem.className = 'item-row';
+            newItem.style.marginBottom = '10px';
+            newItem.style.paddingBottom = '10px';
+            newItem.style.borderBottom = '1px dashed #eee';
+            newItem.style.display = 'flex';
+            newItem.style.alignItems = 'center';
+            
+            newItem.innerHTML = `
+                <select name="items[${itemCount}][product_id]" required style="width: 60%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px; background-color: #fff; color: #333; font-size: 16px;">
+                    <option value="">Selecciona un producto</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="items[${itemCount}][quantity]" min="1" required placeholder="Cantidad" style="width: 25%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; color: #333; font-size: 16px; margin-right: 10px;">
+                <button type="button" class="delete-btn" onclick="deleteItem(this)" style="background-color: transparent; border: none; cursor: pointer; color: #f44336; padding: 5px; border-radius: 4px;" title="Eliminar producto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            `;
+            
+            itemsDiv.appendChild(newItem);
+            itemCount++;
+            
+            // Mostrar el botón de eliminar en la primera fila una vez que hay más de una fila
+            if (itemsDiv.querySelectorAll('.item-row').length > 1) {
+                document.querySelector('.delete-btn').style.visibility = 'visible';
+            }
+        }
+        
+        function deleteItem(button) {
+            const itemsDiv = document.getElementById('items');
+            const itemRow = button.parentNode;
+            
+            // No permitir eliminar si solo queda una fila
+            if (itemsDiv.querySelectorAll('.item-row').length > 1) {
+                itemRow.remove();
+                
+                // Ocultar el botón de eliminar en la primera fila si solo queda una
+                if (itemsDiv.querySelectorAll('.item-row').length === 1) {
+                    document.querySelector('.delete-btn').style.visibility = 'hidden';
+                }
+                
+                // Reordenar los índices
+                reindexItems();
+            }
+        }
+        
+        function reindexItems() {
+            const itemRows = document.querySelectorAll('.item-row');
+            itemRows.forEach((row, index) => {
+                const select = row.querySelector('select');
+                const input = row.querySelector('input');
+                
+                select.name = `items[${index}][product_id]`;
+                input.name = `items[${index}][quantity]`;
+            });
+            
+            // Actualizar el contador
+            itemCount = itemRows.length;
+        }
+    </script>
+</div>
+{% endblock %}
