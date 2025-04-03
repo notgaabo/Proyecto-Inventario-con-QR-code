@@ -1,20 +1,27 @@
- # controllers/dashboard_controller.py
+# controllers/dashboard_controller.py
 
 from flask import render_template, session, redirect, url_for
 from auth.auth import Auth
+from db import Config  # Added missing import
 
 class HomeController:
     @staticmethod
     def home():
-        """Redirige al usuario a su dashboard según su rol."""
         if not Auth.is_authenticated():
-            return redirect(url_for('login'))  # Si no está autenticado, lo redirige al login
+            return redirect(url_for('login'))
 
         user = session['user']
-        if user['role'] == 'admin':
-            return redirect(url_for('admin_dashboard'))  # Redirige al dashboard de admin
+        if user.get('role') == 'admin':  # Use .get() for safety
+            return redirect(url_for('admin_dashboard'))
+        elif user.get('role') == 'manager':  # Updated from 'gerente'
+            return redirect(url_for('statistics'))
+        elif user.get('role') == 'warehouse_manager':  # Updated from 'encargado_almacen'
+            return redirect(url_for('product_list'))
+        elif user.get('role') == 'salesperson':  # Updated from 'vendedor'
+            return redirect(url_for('inventory'))
         else:
-            return redirect(url_for('statistics'))  # Redirige al dashboard de usuario
+            # Handle unexpected roles (optional)
+            return redirect(url_for('login'))  # Or a default page
 
 class StatisticsController:
     @staticmethod
@@ -27,8 +34,29 @@ class StatisticsController:
         return render_template('user/statistics.html', user=user)  # Renderiza la plantilla de estadísticas
     
     @staticmethod
-    def generator_statisticI():
-        """Generador de estadísticas del usuario."""
-        # Implementación del código para generar las estadísticas del usuario
-        
-        
+    def generator_statistic():
+        """
+        Generador de estadísticas del usuario.
+        Devuelve estadísticas básicas del usuario autenticado.
+        """
+        if not Auth.is_authenticated():
+            return redirect(url_for('login'))
+
+        user = session['user']
+        stats = {
+            'user_id': user.get('id'),
+            'username': user.get('username'),
+            'login_count': 0,
+            'last_login': None,
+            'total_actions': 0
+        }
+
+        return render_template('user/statistics.html', stats=stats, user=user)
+
+            # En un entorno de producción, usarías un logger aquí
+        print(f"Error generating statistics: {str(e)}")
+        return render_template(
+            'user/statistics.html', 
+            user=user, 
+            error="Error al generar estadísticas"
+        )

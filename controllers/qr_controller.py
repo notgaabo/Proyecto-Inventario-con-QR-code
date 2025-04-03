@@ -1,5 +1,4 @@
-#controllers/qr_controller.py
-
+# controllers/qr_controller.py
 from flask import request, jsonify, send_file, session, redirect, url_for, render_template
 import qrcode
 import os
@@ -10,18 +9,28 @@ from PIL import Image
 class QrController:
     @staticmethod
     def generate_qr(product_id, save_locally=True):
+        """Generate a QR code for a product."""
         try:
+            if 'user' not in session:
+                return jsonify({"success": False, "message": "User not authenticated"}), 401
+
+            # Permitir a todos los roles que pueden acceder a inventory
+            if session['user'].get('role') not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+                return jsonify({"success": False, "message": "Unauthorized access"}), 403
+
+            company_id = session['user'].get('company_id')
             with Config.get_db_connection() as connection:
                 with connection.cursor(dictionary=True) as cursor:
-                    cursor.execute("SELECT id, name FROM products WHERE id = %s AND user_id = %s", 
-                                  (product_id, session['user']['id']))
+                    cursor.execute(
+                        "SELECT id, name FROM products WHERE id = %s AND company_id = %s",
+                        (product_id, company_id)
+                    )
                     product = cursor.fetchone()
                 
                 if not product:
                     return jsonify({"success": False, "message": "Product not found"}), 404
 
-                qr_data = str(product["id"])  # Solo el ID
-                
+                qr_data = str(product["id"])
                 qr = qrcode.QRCode(
                     version=1,
                     error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -55,150 +64,195 @@ class QrController:
                 img_io.seek(0)
                 return send_file(img_io, mimetype="image/png")
         except Exception as e:
-            return jsonify({"success": False, "message": str(e)}), 500
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
 class LectorController:
     @staticmethod
-    def get_productos():
-        """Obtiene los productos desde la base de datos."""
+    def get_products():
+        """Retrieve products from the database."""
+        if 'user' not in session:
+            raise Exception("User not authenticated")
+        
+        company_id = session['user'].get('company_id')
         conn = Config.get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("""SELECT id, name, category, price, stock, cost_price, user_id FROM products WHERE user_id = %s""", 
-                       (session['user']['id'],))
-        productos = [
-            {
-                'id': str(row['id']),
-                'nombre': row['name'],
-                'categoria': row['category'],
-                'precio': float(row['price']),
-                'stock': row['stock'],
-                'costo': float(row['cost_price'])
-            } for row in cursor.fetchall()
-        ]
-        conn.close()
-        return productos
+        try:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    """SELECT id, name, category, price, stock, cost_price 
+                    FROM products 
+                    WHERE company_id = %s""",
+                    (company_id,)
+                )
+                products = [
+                    {
+                        'id': str(row['id']),
+                        'name': row['name'],
+                        'category': row['category'],
+                        'price': float(row['price']),
+                        'stock': row['stock'],
+                        'cost': float(row['cost_price'])
+                    } for row in cursor.fetchall()
+                ]
+        finally:
+            conn.close()
+        return products
 
     @staticmethod
-    def inventory():
-        """Renderiza la página de inventario."""
+    def inventory(stripe_public_key=None):
+        """Render the inventory page."""
         if 'user' not in session:
             return redirect(url_for('login'))
-        return render_template('user/inventory.html')
+        
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return redirect(url_for('forbidden_error'))
+        
+        return render_template('user/inventory.html', stripe_public_key=stripe_public_key)
 
     @staticmethod
-    def productos():
-        """Devuelve la lista de productos en formato JSON."""
-        if 'user' not in session:
-            return jsonify({"success": False, "message": "Not authenticated"}), 401
-        try:
-            productos = LectorController.get_productos()
-            return jsonify({"success": True, "productos": productos})
-        except Exception as e:
-            return jsonify({"success": False, "message": str(e)}), 500
-
-    @staticmethod
-    def carrito():
-        """Devuelve el contenido del carrito en formato JSON."""
-        if 'user' not in session:
-            return jsonify({"success": False, "message": "Not authenticated"}), 401
-        try:
-            cart = session.get('cart', {})
-            return jsonify({"success": True, "carrito": cart})
-        except Exception as e:
-            return jsonify({"success": False, "message": str(e)}), 500
-
-    @staticmethod
-    def escanear():
+    def products():
+        """Return the list of products in JSON format."""
         if 'user' not in session:
             return jsonify({"success": False, "message": "Not authenticated"}), 401
         
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return jsonify({"success": False, "message": "Unauthorized access"}), 403
+        
+        try:
+            products = LectorController.get_products()
+            return jsonify({"success": True, "products": products})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+    @staticmethod
+    def cart():
+        """Return the cart contents in JSON format."""
+        if 'user' not in session:
+            return jsonify({"success": False, "message": "Not authenticated"}), 401
+        
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return jsonify({"success": False, "message": "Unauthorized access"}), 403
+        
+        try:
+            cart = session.get('cart', {})
+            # Asegurar que el carrito sea compatible con qr.js
+            formatted_cart = {
+                str(k): {
+                    "nombre": v["name"],
+                    "price": v["price"],
+                    "cantidad": v["quantity"]
+                } for k, v in cart.items()
+            }
+            return jsonify({"success": True, "carrito": formatted_cart})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+    @staticmethod
+    def scan():
+        """Scan a product and add it to the cart."""
+        if 'user' not in session:
+            return jsonify({"success": False, "message": "Not authenticated"}), 401
+        
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return jsonify({"success": False, "message": "Unauthorized access"}), 403
+        
         try:
             data = request.get_json()
-            codigo = data.get('codigo')
-            if not codigo:
+            code = data.get('codigo')  # Ajustado a lo que envía qr.js
+            if not code:
                 return jsonify({"success": False, "message": "No code provided"}), 400
 
-            codigo = str(codigo)
-            inventario = {p['id']: p for p in LectorController.get_productos()}
-            if codigo in inventario:
+            code = str(code)
+            inventory = {p['id']: p for p in LectorController.get_products()}
+            if code in inventory:
                 cart = session.get('cart', {})
-                if codigo in cart:
-                    if cart[codigo]["cantidad"] + 1 <= inventario[codigo]["stock"]:
-                        cart[codigo]["cantidad"] += 1
+                if code in cart:
+                    if cart[code]["quantity"] + 1 <= inventory[code]["stock"]:
+                        cart[code]["quantity"] += 1
                     else:
                         return jsonify({"success": False, "message": "Insufficient stock"}), 400
                 else:
-                    cart[codigo] = {
-                        "nombre": inventario[codigo]["nombre"],
-                        "price": inventario[codigo]["precio"],
-                        "stock": inventario[codigo]["stock"],
-                        "cantidad": 1
+                    cart[code] = {
+                        "name": inventory[code]["name"],
+                        "price": inventory[code]["price"],
+                        "stock": inventory[code]["stock"],
+                        "quantity": 1
                     }
 
                 session['cart'] = cart
                 session.modified = True
                 return jsonify({
                     "success": True,
-                    "producto": inventario[codigo]["nombre"],
-                    "cantidad": cart[codigo]["cantidad"]
+                    "producto": inventory[code]["name"],  # Ajustado a qr.js
+                    "cantidad": cart[code]["quantity"]    # Ajustado a qr.js
                 })
             
-            return jsonify({"success": False, "message": "Producto no encontrado"}), 404
+            return jsonify({"success": False, "message": "Product not found"}), 404
         except Exception as e:
-            return jsonify({"success": False, "message": str(e)}), 500
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
     @staticmethod
-    def actualizar_carrito():
+    def update_cart():
+        """Update the cart with a specified quantity."""
         if 'user' not in session:
             return jsonify({"success": False, "message": "Not authenticated"}), 401
             
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return jsonify({"success": False, "message": "Unauthorized access"}), 403
+        
         try:
             data = request.get_json()
-            product_id = str(data['codigo'])
-            cantidad = int(data['cantidad'])
-            inventario = {p['id']: p for p in LectorController.get_productos()}
+            product_id = str(data.get('codigo'))  # Ajustado a qr.js
+            quantity = int(data.get('cantidad', 0))  # Ajustado a qr.js
+            inventory = {p['id']: p for p in LectorController.get_products()}
             
             cart = session.get('cart', {})
-            if product_id in inventario:
-                if cantidad <= inventario[product_id]["stock"]:
-                    if cantidad == 0 and product_id in cart:
+            if product_id in inventory:
+                if quantity <= inventory[product_id]["stock"]:
+                    if quantity == 0 and product_id in cart:
                         del cart[product_id]
-                    elif cantidad > 0:
+                    elif quantity > 0:
                         cart[product_id] = {
-                            "nombre": inventario[product_id]["nombre"],
-                            "price": inventario[product_id]["precio"],
-                            "stock": inventario[product_id]["stock"],
-                            "cantidad": cantidad
+                            "name": inventory[product_id]["name"],
+                            "price": inventory[product_id]["price"],
+                            "stock": inventory[product_id]["stock"],
+                            "quantity": quantity
                         }
                     session['cart'] = cart
                     session.modified = True
                     return jsonify({"success": True})
                 return jsonify({"success": False, "message": "Insufficient stock"})
-            return jsonify({"success": False, "message": "Producto no encontrado"})
+            return jsonify({"success": False, "message": "Product not found"})
         except Exception as e:
-            return jsonify({"success": False, "message": str(e)})
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
     @staticmethod
-    def dar_salida():
+    def checkout():
+        """Process the cart and update stock."""
         if 'user' not in session:
             return jsonify({"success": False, "message": "Not authenticated"}), 401
             
+        if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+            return jsonify({"success": False, "message": "Unauthorized access"}), 403
+        
         try:
             cart = session.get('cart', {})
             if cart:
+                company_id = session['user'].get('company_id')
                 conn = Config.get_db_connection()
-                cursor = conn.cursor()
-                for product_id, item in cart.items():
-                    if item["cantidad"] > 0:
-                        cursor.execute(
-                            "UPDATE products SET stock = stock - %s WHERE id = %s AND user_id = %s",
-                            (item["cantidad"], product_id, session['user']['id'])
-                        )
-                conn.commit()
-                conn.close()
+                try:
+                    with conn.cursor() as cursor:
+                        for product_id, item in cart.items():
+                            if item["quantity"] > 0:
+                                cursor.execute(
+                                    "UPDATE products SET stock = stock - %s WHERE id = %s AND company_id = %s",
+                                    (item["quantity"], product_id, company_id)
+                                )
+                        conn.commit()
+                finally:
+                    conn.close()
                 session['cart'] = {}
                 session.modified = True
-                return jsonify({"success": True, "message": "Salida registrada"})
-            return jsonify({"success": False, "message": "Carrito vacío"})
+                return jsonify({"success": True, "message": "Checkout processed successfully"})
+            return jsonify({"success": False, "message": "Cart is empty"})
         except Exception as e:
-            return jsonify({"success": False, "message": str(e)})
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500

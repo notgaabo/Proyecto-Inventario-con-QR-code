@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockBeam</title>
+    <title>StockBeam - Gestión de Empresas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -11,7 +11,6 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
 </head>
 <body class="bg-gray-100">
 
@@ -20,7 +19,6 @@
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start">
-                    <!-- Botón del menú para móviles -->
                     <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar" type="button" 
                         class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
                         <span class="sr-only">Abrir menú</span>
@@ -28,24 +26,17 @@
                             <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
                         </svg>
                     </button>
-                    
-                    <!-- Logo -->
                     <img src="{{ url_for('static', filename='img/logo.png') }}" class="h-8 me-3 ml-4"/>
                     <span class="self-center text-xl font-semibold sm:text-2xl tracking-[-0.02em] ml-2">
                         <span class="text-black-800">ST</span><span class="text-red-500">O</span><span class="text-black-800">CK</span><span class="text-black-800">BEAM</span>
                     </span>
                 </div>
-
-                <!-- Perfil de usuario -->
                 <div class="flex items-center mr-4">
                     <div class="relative">
-                        <!-- Botón para abrir el dropdown -->
                         <button type="button" class="flex items-center space-x-2 text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" 
                             aria-expanded="false" data-dropdown-toggle="dropdown-user">
                             <img src="{{ url_for('static', filename='img/profile.png') }}" class="w-10 h-10 rounded-full border-2 border-gray-300"/>
                         </button>
-
-                        <!-- Dropdown de usuario -->
                         <div id="dropdown-user" class="z-50 hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg">
                             <div class="px-4 py-3 border-b border-gray-200 flex items-center space-x-3">
                                 <img src="{{ url_for('static', filename='img/profile.png') }}" class="w-10 h-10 rounded-full border-2 border-gray-300"/>
@@ -69,70 +60,134 @@
         </div>
     </nav>
 
-      
+    <!-- Sidebar -->
     <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full sm:translate-x-0 bg-white">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <ul class="space-y-2 font-medium text-black">
                 <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-18v6h8V3h-8Z"/>
                         </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Admin Panel</span>
+                        <span class="ms-3 text-black hover:bg-gray-300 hover:rounded-md transition duration-300">Admin Panel</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('create_user') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5Z"/>
+                    <a href="{{ url_for('create_company') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2V4a2 2 0 0 1 2-2Zm-2 4h4v12H10V6Z"/>
                         </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Create User</span>
+                        <span class="ms-3 text-black hover:bg-gray-300 hover:rounded-md transition duration-300">Crear Empresa</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M4 2C2.895 2 2 2.895 2 4v16c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2V4c0-1.105-.895-2-2-2H4zm8 12h-2V9h2v5zm0-7h-2V3h2v4z"/>
+                    <a href="{{ url_for('manage_companies') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm2 4v12h12V6H6Z"/>
                         </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Inbox</span>
+                        <span class="ms-3 text-black hover:bg-gray-300 hover:rounded-md transition duration-300">Gestionar Empresas</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ url_for('product_list') }}" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 focus:outline-none focus:ring-0">
+                        <svg class="w-5 h-5 text-red-500 transition duration-75" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
                         </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Products</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M16 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2ZM7 6h9v12H7V6Zm0-2h9a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign In</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="flex items-center p-2 rounded-lg no-underline hover:bg-gray-200 hover:text-white focus:outline-none focus:ring-0">
-                        <svg class="w-5 h-5 text-red-500 transition duration-75 group-hover:text-black" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2ZM4 12h16v2H4v-2ZM4 6h16V4H4v2Z"/>
-                        </svg>
-                        <span class="ms-3 text-black transition duration-300 hover:bg-gray-300 hover:rounded-md">Sign Up</span>
+                        <span class="ms-3 text-black hover:bg-gray-300 hover:rounded-md transition duration-300">Productos</span>
                     </a>
                 </li>
             </ul>
         </div>
     </aside>
 
-      <!-- Contenido principal -->
-      <div class="px-2 py-6 sm:ml-64">
+    <!-- Contenido principal -->
+    <div class="px-2 py-6 sm:ml-64">
         <div class="p-2 rounded-lg mt-14 max-w-full overflow-auto">
             {% block content %}
+                <!-- Mensajes flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Formulario para crear empresa -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Crear Nueva Empresa</h2>
+                    <form action="{{ url_for('create_company') }}" method="POST" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
+                            <input type="text" id="name" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" required>
+                        </div>
+                        <div>
+                            <label for="industry" class="block text-sm font-medium text-gray-700">Industria</label>
+                            <input type="text" id="industry" name="industry" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Dirección</label>
+                            <input type="text" id="address" name="address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                            <input type="tel" id="phone" name="phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300">Crear Empresa</button>
+                    </form>
+                </div>
+
+                <!-- Lista de empresas -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4">Empresas Registradas</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Nombre</th>
+                                    <th scope="col" class="px-6 py-3">Industria</th>
+                                    <th scope="col" class="px-6 py-3">Dirección</th>
+                                    <th scope="col" class="px-6 py-3">Teléfono</th>
+                                    <th scope="col" class="px-6 py-3">Estado</th>
+                                    <th scope="col" class="px-6 py-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if companies %}
+                                    {% for company in companies %}
+                                        <tr class="bg-white border-b hover:bg-gray-50">
+                                            <td class="px-6 py-4">{{ company.name }}</td>
+                                            <td class="px-6 py-4">{{ company.industry or 'N/A' }}</td>
+                                            <td class="px-6 py-4">{{ company.address or 'N/A' }}</td>
+                                            <td class="px-6 py-4">{{ company.phone or 'N/A' }}</td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-2 py-1 rounded-full text-xs {% if company.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                                    {{ 'Activa' if company.is_active else 'Inactiva' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <form action="{{ url_for('toggle_company_status', company_id=company.id) }}" method="POST" class="inline">
+                                                    <button type="submit" class="text-sm {% if company.is_active %}text-red-600 hover:text-red-800{% else %}text-green-600 hover:text-green-800{% endif %}">
+                                                        {{ 'Deshabilitar' if company.is_active else 'Habilitar' }}
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No hay empresas registradas</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             {% endblock %}
         </div>
     </div>
-
 
 </body>
 </html>

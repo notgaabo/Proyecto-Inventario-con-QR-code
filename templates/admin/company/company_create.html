@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Usuario para {{ company.name }}</title>
+    <title>Crear Empresa</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gray-100">
@@ -13,7 +13,7 @@
                 class="w-full h-full object-cover rounded-l-2xl">
         </div>
         <div class="w-full md:w-1/2 p-8">
-            <h2 class="text-3xl font-bold text-orange-500 mb-6">Crear Usuario para {{ company.name }}</h2>
+            <h2 class="text-3xl font-bold text-orange-500 mb-6">Crear Empresa</h2>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -23,38 +23,34 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            <form method="POST" action="{{ url_for('create_users_for_company', company_id=company.id) }}" class="space-y-4">
+            <form method="POST" action="{{ url_for('create_company') }}" class="space-y-4">
                 <div>
-                    <label class="block text-gray-700 font-semibold">Usuario</label>
-                    <input type="text" name="username" required placeholder="Ingrese su usuario"
+                    <label class="block text-gray-700 font-semibold">Nombre de la Empresa</label>
+                    <input type="text" name="name" required placeholder="Ingrese el nombre de la empresa"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-semibold">Email</label>
-                    <input type="email" name="email" required placeholder="Ingrese su email"
+                    <label class="block text-gray-700 font-semibold">Industria</label>
+                    <input type="text" name="industry" placeholder="Ingrese la industria (opcional)"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-semibold">Contraseña</label>
-                    <input type="password" name="password" required placeholder="Ingrese su contraseña"
+                    <label class="block text-gray-700 font-semibold">Dirección</label>
+                    <input type="text" name="address" placeholder="Ingrese la dirección (opcional)"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                 </div>
                 <div>
-                    <label for="role" class="block text-gray-700 font-semibold">Seleccionar Rol</label>
-                    <select id="role" name="role" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-orange-400 focus:border-orange-400 block w-full p-2.5">
-                        <option selected disabled>Seleccione un rol</option>
-                        {% for role in roles %}
-                            <option value="{{ role }}">{{ role|capitalize }}</option>
-                        {% endfor %}
-                    </select>                                  
+                    <label class="block text-gray-700 font-semibold">Teléfono</label>
+                    <input type="text" name="phone" placeholder="Ingrese el teléfono (opcional)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
                 </div>
                 <button type="submit"
                     class="w-full bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 transition">
-                    Agregar Usuario
+                    Crear Empresa
                 </button>
             </form>
             <a href="{{ url_for('admin_dashboard') }}" class="block text-center mt-4 text-orange-500 hover:underline">
-                Finalizar y volver al dashboard
+                Volver al dashboard
             </a>
         </div>
     </div>

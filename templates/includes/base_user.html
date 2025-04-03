@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockBeam</title>
+    <title>StockBeam - {% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-transparente.png') }}">
 </head>
 <body class="bg-gray-100">
 
@@ -65,7 +65,7 @@
                                     {{ session['user']['username'] }}
                                 </p>
                                 <p class="text-xs text-gray-500 truncate">
-                                    {{ session['user']['email'] }}
+                                    {{ session['user']['email'] if session['user'].get('email') else 'Sin email' }}
                                 </p>
                             </div>
                         </div>
@@ -77,7 +77,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                     </svg>
-                                    <span>Logout</span>
+                                    <span>Cerrar Sesión</span>
                                 </a>
                             </li>
                         </ul>
@@ -92,12 +92,15 @@
     <aside id="logo-sidebar" class="fixed top-0 left-0 z-10 w-64 h-screen pt-20 transition-transform -translate-x-full sm:translate-x-0 bg-white shadow-md">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <ul class="space-y-2 font-medium text-black">
+                {% if session['user']['role'] in ['gerente', 'admin'] %}
                 <li>
                     <a href="{{ url_for('statistics') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
                         <i class="fa-solid fa-chart-pie text-red-500"></i>
-                        <span class="ml-3">Estadisticas</span>
+                        <span class="ml-3">Estadísticas</span>
                     </a>
                 </li>
+                {% endif %}
+                {% if session['user']['role'] in ['vendedor', 'encargado de almacén', 'gerente', 'admin'] %}
                 <li>
                     <a href="{{ url_for('inventory') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" class="fill-current text-red-500">
@@ -106,6 +109,8 @@
                         <span class="ml-3">Scanner Web</span>
                     </a>                    
                 </li>
+                {% endif %}
+                {% if session['user']['role'] in ['encargado de almacén', 'gerente', 'admin'] %}
                 <li>
                     <a href="{{ url_for('product_list') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-tags w-5 h-5 text-red-500"></i>
@@ -117,9 +122,18 @@
                         <svg class="w-6 h-6 text-red-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11H4m15.5 5a.5.5 0 0 0 .5-.5V8a1 1 0 0 0-1-1h-3.75a1 1 0 0 1-.829-.44l-1.436-2.12a1 1 0 0 0-.828-.44H8a1 1 0 0 0-1 1M4 9v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-3.75a1 1 0 0 1-.829-.44L9.985 8.44A1 1 0 0 0 9.157 8H5a1 1 0 0 0-1 1Z"/>
                         </svg>                          
-                        <span class="ml-3">Historial De Ventas</span>
+                        <span class="ml-3">Historial de Ventas</span>
                     </a>
                 </li>
+                {% endif %}
+                {% if session['user']['role'] == 'admin' %}
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-user-shield text-red-500"></i>
+                        <span class="ml-3">Panel de Administración</span>
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </aside>

@@ -3,11 +3,13 @@
 {% block content %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <div class="bg-gray-50 font-sans min-h-screen flex flex-col">
     <div class="container mx-auto p-6 lg:p-8 flex-grow">
         <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-900 tracking-tight">
-            <i class="fas fa-warehouse mr-2 text-orange-600"></i>Sistema de Almacenamiento QR
+            <i class="fas fa-warehouse mr-2 text-orange-600"></i>Inventario y Ventas
         </h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
@@ -17,18 +19,18 @@
                 <div id="qr-reader" class="w-full mb-4 border border-gray-200 rounded-lg overflow-hidden"></div>
                 <div id="qr-result" class="text-center text-lg font-medium text-gray-700 italic"></div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+            <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transitioninky-shadow duration-300">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-                    <i class="fas fa-box-open mr-2 text-orange-500"></i>Registro de Salida
+                    <i class="fas fa-box-open mr-2 text-orange-500"></i>Carrito de Ventas
                 </h2>
                 <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"></div>
                 <div class="mt-6 border-t border-gray-200 pt-4">
-                    <p id="cart_total" class="font-semibold text-lg text-gray-800">Total Registrado: $0.00</p>
+                    <p id="cart_total" class="font-semibold text-lg text-gray-800">Total: $0.00</p>
                     <button id="checkout_btn" 
                             data-modal-target="checkout-modal" 
                             data-modal-toggle="checkout-modal" 
                             class="mt-4 w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition duration-200 font-medium shadow-sm">
-                        <i class="fas fa-check-circle mr-2"></i>Confirmar Salida
+                        <i class="fas fa-check-circle mr-2"></i>Confirmar Venta
                     </button>
                 </div>
             </div>
@@ -42,7 +44,7 @@
             <div class="relative bg-white rounded-lg shadow">
                 <div class="flex items-center justify-between p-5 border-b rounded-t border-gray-200">
                     <h3 class="text-xl font-semibold text-gray-900">
-                        <i class="fas fa-receipt mr-2 text-orange-500"></i>Detalle de Salida
+                        <i class="fas fa-receipt mr-2 text-orange-500"></i>Detalle de Venta
                     </h3>
                     <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center" data-modal-hide="checkout-modal">
                         <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
@@ -57,18 +59,28 @@
                         <div id="modal_products" class="space-y-3 max-h-60 overflow-y-auto pr-2"></div>
                     </div>
                     <div class="bg-gray-50 p-4 rounded-lg">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-600">Subtotal:</span>
-                            <span id="modal_subtotal" class="font-medium">$0.00</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-600">ITBIS (18%):</span>
-                            <span id="modal_tax" class="font-medium">$0.00</span>
-                        </div>
                         <div class="flex justify-between text-lg font-bold border-t border-gray-300 pt-2 mt-2">
                             <span>Total a Pagar:</span>
                             <span id="modal_total" class="text-orange-600">$0.00</span>
                         </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="payment_method" class="block text-sm font-medium text-gray-700">Método de Pago</label>
+                        <select id="payment_method" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                            <option value="cash">Efectivo</option>
+                            <option value="transfer">Transferencia</option>
+                            <option value="stripe">Tarjeta (Stripe)</option>
+                        </select>
+                    </div>
+                    <div id="transfer_form" class="mt-4 hidden">
+                        <input type="text" id="account_number" placeholder="Número de cuenta" class="w-full p-2 mt-2 border border-gray-300 rounded-md" required>
+                        <input type="text" id="bank_name" placeholder="Nombre del banco" class="w-full p-2 mt-2 border border-gray-300 rounded-md" required>
+                        <input type="date" id="transfer_date" class="w-full p-2 mt-2 border border-gray-300 rounded-md" required>
+                        <input type="text" id="reference_number" placeholder="Número de referencia" class="w-full p-2 mt-2 border border-gray-300 rounded-md" required>
+                    </div>
+                    <div id="stripe_form" class="mt-4 hidden">
+                        <div id="card-element" class="w-full p-2 mt-2 border border-gray-300 rounded-md"></div>
+                        <div id="card-errors" class="text-red-500 mt-2"></div>
                     </div>
                 </div>
                 <div class="flex items-center justify-end p-5 border-t border-gray-200 rounded-b">
@@ -80,37 +92,9 @@
     </div>
 </div>
 
-<style>
-    .modal-active {
-        filter: blur(3px);
-        transition: filter 0.3s ease;
-    }
-</style>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const checkoutBtn = document.getElementById('checkout_btn');
-    const confirmCheckoutBtn = document.getElementById('confirm_checkout');
-    const checkoutModal = document.getElementById('checkout-modal');
-
-    if (typeof Modal === 'undefined') {
-        console.error('Flowbite no está cargado.');
-        return;
-    }
-
-    const modal = new Modal(checkoutModal);
-
-    checkoutBtn?.addEventListener('click', () => {
-        modal.show();
-    });
-
-    confirmCheckoutBtn?.addEventListener('click', () => {
-        alert('Pago confirmado');
-        modal.hide();
-    });
-});
+    const stripePublicKey = '{{ stripe_public_key }}';
 </script>
-
-<script src="{{ url_for('static', filename='js/qr.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sales.js') }}"></script>
+<script src="{{ url_for('static', filename='js/qr.js') }}"></script>
 {% endblock %}
