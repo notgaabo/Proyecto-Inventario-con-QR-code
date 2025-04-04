@@ -11,6 +11,8 @@ from controllers.qr_controller import QrController, LectorController
 from controllers.sales_controller import SalesController
 from controllers.company_controller import CompanyController
 from controllers.order_controller import OrderController
+from controllers.sales_prediction import SalesPrediction
+import time
 
 class InventoryApp(Flask):
     def __init__(self):
@@ -50,6 +52,8 @@ class InventoryApp(Flask):
         self.add_url_rule('/statistics', 'statistics', StatisticsController.statistics)
         self.add_url_rule('/statistics/chart', 'statistics_chart', StatisticsController.statistics)
         self.add_url_rule('/filter-sales', 'filer_sales', StatisticsController.filter_sales, methods=['GET'])
+        self.add_url_rule('/sales_prediction', 'sales_prediction', SalesPrediction.get_sales_prediction)
+        self.add_url_rule('/static/<path:filename>', 'send_image', SalesPrediction.send_image)
 
         # Rutas de productos (encargado de almacén, gerente, admin)
         self.add_url_rule('/product', 'product_list', ProductController.get_product_list, methods=['GET'])

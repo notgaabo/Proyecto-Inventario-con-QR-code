@@ -1,26 +1,34 @@
-# controllers/statistic_controller.py
 import plotly.graph_objs as go
 import plotly.io as pio
 from flask import render_template, session, redirect, url_for, abort, jsonify, request
 from db.config import Config
 from datetime import datetime, timedelta
+from controllers.sales_prediction import SalesPrediction  # Import from controllers directory
 
 class StatisticsController:
     @staticmethod
     def statistics():
-        """Render the statistics page with charts, accessible only to managers."""
         if 'user' not in session:
             return redirect(url_for('login'))
 
-        # Restrict access to managers only
         if session['user']['role'] != 'gerente':
             return redirect(url_for('forbidden_error'))
 
         stats = StatisticsController.get_sales_data()
         chart_html = StatisticsController.generate_chart(stats)
-        top_products = StatisticsController.get_top_products('month')  # Default a mes
-        return render_template("user/statistics.html", chart=chart_html, stats=stats, products=top_products)
+        top_products = StatisticsController.get_top_products('month')
 
+        sales_pred = SalesPrediction()
+        prediction_img_path = sales_pred.get_sales_prediction()
+
+        return render_template(
+            "user/statistics.html",
+            chart=chart_html,
+            stats=stats,
+            products=top_products,
+            prediction_img_path=prediction_img_path
+        )
+    
     @staticmethod
     def get_sales_data():
         """Retrieve sales statistics by period from the database."""

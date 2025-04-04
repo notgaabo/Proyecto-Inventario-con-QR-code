@@ -8,25 +8,36 @@
         Catálogo de Productos
     </h1>
 
-    <!-- Mostrar errores si existen -->
-    {% if error %}
-        <div class="bg-gray-100 border-l-4 border-orange-500 text-gray-800 px-6 py-4 rounded-md mb-8" role="alert">
-            <p class="font-semibold">¡Error!</p>
-            <p>{{ error }}</p>
+    <!-- Contenedor para la alerta de error -->
+    <div id="errorAlertContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-auto max-w-md z-50" style="display: none;">
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg flex items-center space-x-2">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium">¡Error!</p>
+                <p id="errorMessage" class="text-sm">{{ error or '' }}</p>
+            </div>
+            <button id="closeErrorAlertBtn" class="ml-auto text-red-500 hover:text-red-700 focus:outline-none">
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
         </div>
-    {% endif %}
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-         {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endfor %}
-    {% endif %}
-{% endwith %}
-
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <!-- Barra de búsqueda y filtros -->
     <div class="w-full bg-white shadow-md mb-8 p-4 rounded-lg">
@@ -87,13 +98,15 @@
         </div>
     </div>
 
-    <!-- Botón para agregar producto -->
+    <!-- Botón para agregar producto (restringido a admin y gerente) -->
+    {% if user_role in ['admin', 'gerente'] %}
     <button data-modal-target="crud-modal" data-modal-toggle="crud-modal" class="group mb-8 bg-white text-gray-800 px-6 py-3 rounded-full border-2 border-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-300 shadow-md flex items-center">
         <svg class="w-5 h-5 mr-2 group-hover:animate-pulse" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
         Nuevo Producto
     </button>
+    {% endif %}
 
-    <!-- Modal para agregar productos (sin cambios) -->
+    <!-- Modal para agregar productos -->
     <div id="crud-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-gray-800 bg-opacity-50 backdrop-blur-sm">
         <div class="relative p-4 w-full max-w-2xl max-h-full">
             <div class="relative bg-white rounded-xl shadow-2xl">
@@ -147,9 +160,11 @@
                     </div>
                     <input type="hidden" name="user_id" value="{{ session['user']['id'] }}">
                     <div class="flex justify-end">
+                        {% if user_role in ['admin', 'gerente'] %}
                         <button type="submit" class="text-white bg-orange-500 hover:bg-orange-600 font-medium rounded-full text-sm px-6 py-3 text-center shadow-lg hover:shadow-xl transition-all duration-300">
                             Agregar Producto
                         </button>
+                        {% endif %}
                     </div>
                 </form>
             </div>
@@ -195,7 +210,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Modales (sin cambios) -->
+                <!-- Modales -->
                 <div id="product-{{ product.id }}" tabindex="-1" aria-hidden="true" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
                     <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md m-4 overflow-hidden">
                         <div class="h-40 bg-gradient-to-r from-gray-900 to-black relative">
@@ -304,7 +319,11 @@
         display: block;
         opacity: 1;
     }
+    #errorAlertContainer {
+        transition: opacity 0.3s ease;
+    }
 </style>
+
 <!-- Scripts -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -319,7 +338,33 @@
         const sortProducts = document.getElementById('sortProducts');
         const productGrid = document.getElementById('productGrid');
         const productCount = document.getElementById('productCount');
-    
+        const errorAlertContainer = document.getElementById('errorAlertContainer');
+        const closeErrorAlertBtn = document.getElementById('closeErrorAlertBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Mostrar la alerta si hay un mensaje de error (no vacío)
+        if (errorMessage.textContent.trim() !== '') {
+            errorAlertContainer.style.display = 'block';
+            setTimeout(() => {
+                errorAlertContainer.style.opacity = '0';
+                setTimeout(() => {
+                    errorAlertContainer.style.display = 'none';
+                    errorAlertContainer.style.opacity = '1'; // Reset opacity for next use
+                }, 300);
+            }, 5000);
+        }
+
+        // Cerrar la alerta al hacer clic en el botón
+        if (closeErrorAlertBtn) {
+            closeErrorAlertBtn.addEventListener('click', function() {
+                errorAlertContainer.style.opacity = '0';
+                setTimeout(() => {
+                    errorAlertContainer.style.display = 'none';
+                    errorAlertContainer.style.opacity = '1';
+                }, 300);
+            });
+        }
+
         // Mostrar/Ocultar filtros
         filterButton.addEventListener('click', function() {
             filterArea.classList.toggle('show');
@@ -374,8 +419,8 @@
                 }
     
                 products.forEach(product => {
-                    const stockClass = product.stock === 0 ? 'bg-red-600' : 'bg-orange-500';
-                    const stockText = product.stock === 0 ? 'Agotado' : 'En Stock';
+                    const stockClass = product.stock === 0  ? 'bg-red-600' : product.stock < 5 ? 'bg-orange-500' : 'bg-green-500';
+                    const stockText = product.stock === 0 ? 'Agotado' : product.stock < 5 ? 'Stock Bajo' : 'En Stock'
                     const productHtml = `
                         <div class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
                             <div class="h-48 bg-gray-100 relative overflow-hidden">

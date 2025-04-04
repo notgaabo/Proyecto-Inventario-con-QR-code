@@ -86,13 +86,18 @@
         </div>
     </div>
 
-    <!-- Gráfica -->
-    <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Gráfica de Ventas</h2>
-        <div class="w-full min-h-[400px] lg:min-h-[500px] overflow-hidden">
-            {{ chart | safe }}
-        </div>
+<!-- In the Gráfica section -->
+<div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Gráfica de Ventas</h2>
+    <div class="w-full min-h-[400px] lg:min-h-[500px] overflow-hidden">
+        {{ chart | safe }}
     </div>
+        {% if prediction_img_path %}
+        <img src="{{ url_for('send_image', filename=prediction_img_path) }}" alt="Gráfico de ventas y predicción" class="mt-4">
+    {% else %}
+        <p>No se pudo generar la predicción de ventas.</p>
+    {% endif %}
+</div>
 </div>
 
 <!-- JavaScript para filtrar -->
