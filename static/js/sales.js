@@ -1,5 +1,3 @@
-//sales.js
-
 document.addEventListener('DOMContentLoaded', () => {
     const checkoutBtn = document.getElementById('checkout_btn');
     const confirmCheckoutBtn = document.getElementById('confirm_checkout');
@@ -14,9 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let elements = null;
     let card = null;
 
+    console.log('sales.js cargado correctamente');
+
     const initializeStripe = () => {
         if (!stripe) {
-            stripe = Stripe(stripePublicKey);
+            stripe = Stripe(stripePublicKey); // Asegúrate de definir stripePublicKey en tu HTML
             elements = stripe.elements();
             card = elements.create('card', {
                 style: {
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const displayError = document.getElementById('card-errors');
                 displayError.textContent = event.error ? event.error.message : '';
             });
+            console.log('Stripe inicializado');
         }
     };
 
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card = null;
             stripe = null;
             elements = null;
+            console.log('Stripe destruido');
         }
     };
 
@@ -59,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stripeForm.classList.remove('hidden');
             initializeStripe();
         }
+        console.log('Método de pago cambiado a:', e.target.value);
     });
 
     const calculateItemTotal = (price, quantity) => (Number(price) || 0) * (Number(quantity) || 0);
@@ -72,22 +75,22 @@ document.addEventListener('DOMContentLoaded', () => {
             total += calculateItemTotal(price, quantity);
         });
         cartTotalElement.textContent = `Total: $${total.toFixed(2)}`;
+        console.log('Total del carrito actualizado:', total);
         return total;
     };
 
     const clearCart = () => {
-        fetch('/limpiar_carrito', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        }).then(() => {
-            cartContainer.innerHTML = '<p class="text-gray-500">Registro vacío</p>';
-            cartTotalElement.textContent = 'Total: $0.00';
-        });
+        cartContainer.innerHTML = '<p class="text-gray-500">Registro vacío</p>';
+        cartTotalElement.textContent = 'Total: $0.00';
+        console.log('Carrito limpiado en el frontend');
     };
 
     const loadCartData = () => {
         const modalProducts = document.getElementById('modal_products');
-        if (!modalProducts) return;
+        if (!modalProducts) {
+            console.warn('modal_products no encontrado');
+            return;
+        }
 
         modalProducts.innerHTML = '';
         let total = 0;
@@ -113,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.getElementById('modal_total').textContent = `$${total.toFixed(2)}`;
+        console.log('Datos del carrito cargados en el modal, total:', total);
         return total;
     };
 
@@ -121,13 +125,18 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCartData();
             const modal = new Flowbite.Modal(checkoutModal);
             modal.show();
+            console.log('Modal de checkout abierto');
         });
+    } else {
+        console.warn('checkout_btn no encontrado');
     }
 
     if (confirmCheckoutBtn) {
         confirmCheckoutBtn.addEventListener('click', async () => {
             const paymentMethod = paymentMethodSelect.value;
             const totalAmount = updateCartTotal();
+
+            console.log('Botón Confirmar Pago clicado, método:', paymentMethod, 'total:', totalAmount);
 
             if (totalAmount <= 0) {
                 alert('El total debe ser mayor que cero para proceder con el pago.');
@@ -170,9 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const { token, error } = await stripe.createToken(card);
                     if (error) {
                         document.getElementById('card-errors').textContent = error.message;
+                        console.error('Error en Stripe token:', error.message);
                         return;
                     }
                     payload.stripe_token = token.id;
+                    console.log('Token de Stripe generado:', token.id);
                 } else if (paymentMethod === 'transfer') {
                     const transferData = {
                         account_number: document.getElementById('account_number').value,
@@ -188,8 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     payload.transfer_data = transferData;
+                    console.log('Datos de transferencia:', transferData);
                 }
 
+                console.log('Enviando solicitud a /register_sale con payload:', payload);
                 const response = await fetch('/register_sale', {
                     method: 'POST',
                     headers: {
@@ -199,25 +212,60 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(payload)
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Error en la solicitud: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
+                console.log('Respuesta de /register_sale:', data);
 
                 if (data.success) {
+                    console.log('Venta registrada con éxito, limpiando carrito');
                     clearCart();
                     alert('Venta registrada con éxito');
-                    const modal = Flowbite.Modal.getInstance(checkoutModal);
-                    modal.hide();
-                    destroyStripe();
+
+                    // Close the modal manually
+                    const modalElement = document.getElementById('checkout-modal');
+                    if (modalElement) {
+                        modalElement.classList.add('hidden');
+                        console.log('Modal cerrado manualmente');
+                    } else {
+                        console.warn('Modal element not found');
+                    }
+
+                    // Trigger PDF download with all sale_ids
+                    if (data.sale_ids && data.sale_ids.length > 0) {
+                        const saleIdsParam = data.sale_ids.join(',');
+                        const invoiceUrl = `/factura?ids=${saleIdsParam}`;
+                        console.log('Generando descarga de factura con todos los IDs:', invoiceUrl);
+
+                        const link = document.createElement('a');
+                        link.href = invoiceUrl;
+                        link.download = `factura_${data.sale_ids[0]}.pdf`; // Nombre basado en el primer ID
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        console.log('Descarga de factura iniciada');
+                    } else {
+                        console.warn('No se recibieron sale_ids en la respuesta');
+                    }
+
                     if (paymentMethod === 'stripe' && data.receipt_url) {
+                        console.log('Abriendo recibo de Stripe:', data.receipt_url);
                         window.open(data.receipt_url, '_blank');
                     }
+
+                    destroyStripe();
                 } else {
                     throw new Error(data.error || 'Error desconocido del servidor');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error al registrar la venta:', error);
                 alert(`Error al registrar la venta: ${error.message}`);
             }
         });
+    } else {
+        console.warn('confirm_checkout no encontrado');
     }
 
     checkoutModal.addEventListener('hidden.flowbite.modal', () => {

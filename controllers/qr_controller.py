@@ -5,6 +5,7 @@ import os
 import io
 from db import Config
 from PIL import Image
+from datetime import datetime
 
 class QrController:
     @staticmethod
@@ -106,7 +107,9 @@ class LectorController:
         if session['user']['role'] not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
             return redirect(url_for('forbidden_error'))
         
-        return render_template('user/inventory.html', stripe_public_key=stripe_public_key)
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        
+        return render_template('user/inventory.html', fecha_actual=fecha_actual, stripe_public_key=stripe_public_key)
 
     @staticmethod
     def products():

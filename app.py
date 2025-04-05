@@ -12,6 +12,7 @@ from controllers.sales_controller import SalesController
 from controllers.company_controller import CompanyController
 from controllers.order_controller import OrderController
 from controllers.sales_prediction import SalesPrediction
+from controllers.invoice_controller import InvoiceGenerator
 import time
 
 class InventoryApp(Flask):
@@ -83,6 +84,7 @@ class InventoryApp(Flask):
         # Rutas de ventas (todos los roles autenticados)
         self.add_url_rule('/register_sale', 'register_sale', SalesController.register_sale, methods=['POST'])
         self.add_url_rule('/sales_history', 'sales_history', ProductController.sales_history, methods=['GET'])
+        self.add_url_rule('/factura', 'get_factura', InvoiceGenerator.get_factura, methods=['GET'])
 
         # Gestión de empresas (solo admin)
         self.add_url_rule('/manage_companies', 'manage_companies', CompanyController.manage_companies, methods=['GET'])
@@ -94,6 +96,7 @@ class InventoryApp(Flask):
         return render_template('errors/disabled_user.html'), 403
 
 app = InventoryApp()
+
 
 @app.before_request
 def check_user_status():
