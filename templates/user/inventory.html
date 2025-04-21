@@ -18,11 +18,24 @@
                 <div id="qr-result" class="text-center text-lg font-medium text-gray-700 italic"></div>
             </div>
 
-            <!-- Carrito -->
+            <!-- Carrito con Buscador -->
             <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">
                     <i class="fas fa-box-open mr-2 text-orange-500"></i>Carrito de Ventas
                 </h2>
+                
+                <!-- Sección de búsqueda -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <input type="text" 
+                               id="product-search" 
+                               placeholder="Buscar producto por ID..." 
+                               class="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <div id="search-results" class="mt-2 max-h-40 overflow-y-auto hidden"></div>
+                </div>
+
                 <div id="cart_items" class="space-y-4 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"></div>
                 <div class="mt-6 border-t border-gray-200 pt-4">
                     <p id="cart_total" class="font-semibold text-lg text-gray-800">Total: $0.00</p>
@@ -32,9 +45,8 @@
                             class="mt-4 w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition duration-200 font-medium shadow-sm">
                         <i class="fas fa-check-circle mr-2"></i>Confirmar Venta
                     </button>
-                                        <!-- Alerta -->
+                    <!-- Alerta -->
                     <div id="alert_container" class="mt-4"></div>
-
                 </div>
             </div>
         </div>
@@ -102,15 +114,129 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     const stripePublicKey = '{{ stripe_public_key }}';
-    console.log('stripePublicKey cargado:', stripePublicKey); // Depuración
+    console.log('stripePublicKey cargado:', stripePublicKey);
 </script>
 <script src="{{ url_for('static', filename='js/sales.js') }}" onerror="console.error('Error al cargar sales.js')"></script>
 <script src="{{ url_for('static', filename='js/qr.js') }}" onerror="console.error('Error al cargar qr.js')"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         console.log('DOM completamente cargado');
-        console.log('checkout_btn existe:', !!document.getElementById('checkout_btn'));
-        console.log('confirm_checkout existe:', !!document.getElementById('confirm_checkout'));
+        const searchInput = document.getElementById('product-search');
+        const qrResultDiv = document.getElementById('qr-result');
+
+        // Función para agregar producto por ID
+        async function addProductById(productId) {
+            try {
+                // Verificar si el producto ya está en el carrito
+                const cartItems = document.querySelectorAll('#cart_items div[data-product-id]');
+                let productExists = false;
+
+                cartItems.forEach(item => {
+                    if (item.dataset.productId === productId) {
+                        productExists = true;
+                        const quantityInput = item.querySelector('input');
+                        const currentQuantity = parseInt(quantityInput.value) || 0;
+                        quantityInput.value = currentQuantity + 1; // Incrementar cantidad
+                        updateQuantity(productId, currentQuantity + 1); // Actualizar en backend
+                    }
+                });
+
+                // Si no existe, hacer la solicitud para añadirlo
+                if (!productExists) {
+                    const response = await fetch('/escanear', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ codigo: productId })
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        qrResultDiv.innerHTML = `<p class="text-green-600">Añadido: ${result.producto} (x${result.cantidad})</p>`;
+                        // Actualizar el carrito inmediatamente
+                        await updateCartFromQR();
+                    } else {
+                        qrResultDiv.innerHTML = `<p class="text-red-600">${result.message}</p>`;
+                    }
+                } else {
+                    qrResultDiv.innerHTML = `<p class="text-green-600">Cantidad incrementada para ID: ${productId}</p>`;
+                }
+            } catch (error) {
+                qrResultDiv.innerHTML = `<p class="text-red-600">Error al procesar el ID: ${error.message}</p>`;
+            }
+        }
+
+        // Función para actualizar el carrito (reutilizando la de qr.js)
+        async function updateCartFromQR() {
+            try {
+                const response = await fetch('/carrito', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const cart = result.carrito || {};
+                    let html = '';
+                    let total = 0;
+
+                    Object.entries(cart).forEach(([id, item]) => {
+                        const costo = item.price ?? 0;
+                        const cantidad = item.cantidad ?? 0;
+                        const subtotal = costo * cantidad;
+                        total += subtotal;
+
+                        html += `
+                            <div data-product-id="${id}" class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
+                                <div>
+                                    <span class="font-semibold text-gray-800">${item.nombre || 'Sin nombre'}</span>
+                                    <span class="text-gray-600">$${costo.toFixed(2)}</span>
+                                    <input type="number" 
+                                           class="w-16 border rounded p-1 text-center" 
+                                           value="${cantidad}" 
+                                           min="0" 
+                                           onchange="updateQuantity('${id}', this.value)">
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-gray-700 font-medium">$${subtotal.toFixed(2)}</span>
+                                    <button onclick="updateQuantity('${id}', 0)" 
+                                            class="ml-3 text-red-500 hover:text-red-700 transition duration-200">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    document.getElementById('cart_items').innerHTML = html || '<p class="text-gray-500">Registro vacío</p>';
+                    document.getElementById('cart_total').textContent = `Total Registrado: $${total.toFixed(2)}`;
+                    document.dispatchEvent(new Event('cartUpdated')); // Disparar evento para sales.js
+                } else {
+                    document.getElementById('cart_items').innerHTML = `<p class="text-red-600">Error al cargar el registro: ${result.message}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('cart_items').innerHTML = `<p class="text-red-600">Error al cargar el registro: ${error.message}</p>`;
+            }
+        }
+
+        // Evento al presionar Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const productId = searchInput.value.trim();
+                if (productId) {
+                    addProductById(productId);
+                    searchInput.value = ''; // Limpiar input
+                }
+            }
+        });
+
+        // Evento al salir del input (onblur)
+        searchInput.addEventListener('blur', () => {
+            const productId = searchInput.value.trim();
+            if (productId) {
+                addProductById(productId);
+                searchInput.value = ''; // Limpiar input
+            }
+        });
     });
 </script>
 {% endblock %}

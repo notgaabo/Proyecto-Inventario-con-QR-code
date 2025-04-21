@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@1.6.5/dist/flowbite.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://kit.fontescaped.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -44,8 +44,46 @@
                 </div>
             </div>
 
-            <!-- Perfil de usuario -->
+            <!-- Perfil de usuario y notificaciones -->
             <div class="flex items-center mr-4">
+                <!-- Botón y dropdown de notificaciones -->
+                <div class="relative mr-3">
+                    <button type="button" 
+                            class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 focus:outline-none relative" 
+                            aria-expanded="false" 
+                            data-dropdown-toggle="dropdown-notifications">
+                        <i class="fas fa-bell text-gray-700"></i>
+                        <!-- Indicador de notificaciones no leídas -->
+                        <span id="unread-indicator" class="absolute top-1 right-1 w-3 h-3 bg-orange-500 rounded-full hidden"></span>
+                    </button>
+
+                    <div id="dropdown-notifications" 
+                         class="z-50 hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-gray-900">Notificaciones</h3>
+                            <button id="mark-all-read" class="text-xs text-blue-600 hover:text-blue-800 transition-colors duration-150">
+                                Marcar todas como leídas
+                            </button>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto">
+                            <ul id="notifications-list" class="py-1">
+                                <!-- Notificaciones se cargarán dinámicamente aquí -->
+                            </ul>
+                            
+                            <!-- Estado vacío cuando no hay notificaciones -->
+                            <div id="empty-state" class="py-8 px-4 hidden">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                                        <i class="fas fa-bell-slash text-gray-400"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-600">No hay notificaciones pendientes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Perfil de usuario -->
                 <div class="relative">
                     <button type="button" 
                             class="flex items-center space-x-2 p-1 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors duration-200 focus:outline-none" 
@@ -117,7 +155,13 @@
                         <span class="ml-3">Productos</span>
                     </a>
                 </li>
-                {% endif %}
+                {% endif %} 
+                <li>
+                    <a href="{{ url_for('returns_list') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-undo w-5 h-5 text-red-500"></i>
+                        <span class="ml-3">Devoluciones</span>
+                    </a>
+                </li>
                 {% if session.get('user') and session['user'].get('role') in ['gerente', 'admin'] %}
                 <li>
                     <a href="{{ url_for('order_list') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
@@ -131,6 +175,14 @@
                     <a href="{{ url_for('receive_order') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-truck w-5 h-5 text-red-500"></i>
                         <span class="ml-3">Recibir Orden</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if session['user']['role'] in ['gerente', 'admin'] %}
+                <li>
+                    <a href="{{ url_for('supplier_list') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-truck w-5 h-5 text-red-500"></i>
+                        <span class="ml-3">Proveedores</span>
                     </a>
                 </li>
                 {% endif %}
@@ -155,6 +207,192 @@
             {% endblock %}
         </div>
     </div>
+
+    <!-- Script para el manejo de notificaciones -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para calcular el tiempo transcurrido
+        function timeSince(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            
+            let interval = seconds / 31536000; // Años
+            if (interval > 1) return Math.floor(interval) + "y";
+            
+            interval = seconds / 2592000; // Meses
+            if (interval > 1) return Math.floor(interval) + "m";
+            
+            interval = seconds / 86400; // Días
+            if (interval > 1) return Math.floor(interval) + "d";
+            
+            interval = seconds / 3600; // Horas
+            if (interval > 1) return Math.floor(interval) + "h";
+            
+            interval = seconds / 60; // Minutos
+            if (interval > 1) return Math.floor(interval) + "min";
+            
+            return Math.floor(seconds) + "s";
+        }
+
+        // Función para renderizar las notificaciones
+        function renderNotifications(notifications) {
+            const notificationsList = document.getElementById('notifications-list');
+            notificationsList.innerHTML = '';
+
+            notifications.forEach(notification => {
+                // Determinar el icono y color según el tipo de notificación
+                let iconClass, bgColor, icon;
+                switch (notification.type) {
+                    case 'stock_low':
+                        iconClass = 'fas fa-exclamation-triangle';
+                        bgColor = 'bg-red-100';
+                        iconColor = 'text-red-500';
+                        break;
+                    case 'new_order':
+                        iconClass = 'fas fa-file-invoice';
+                        bgColor = 'bg-green-100';
+                        iconColor = 'text-green-500';
+                        break;
+                    case 'return':
+                        iconClass = 'fas fa-undo';
+                        bgColor = 'bg-yellow-100';
+                        iconColor = 'text-yellow-500';
+                        break;
+                    default:
+                        iconClass = 'fas fa-bell';
+                        bgColor = 'bg-gray-100';
+                        iconColor = 'text-gray-500';
+                }
+
+                const li = document.createElement('li');
+                li.className = 'notification-item';
+                li.dataset.id = notification.id;
+                li.dataset.read = notification.read ? 'true' : 'false';
+                li.innerHTML = `
+                    <a href="#" class="flex p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+                        <div class="flex-shrink-0 mr-3">
+                            <div class="w-8 h-8 rounded-full ${bgColor} flex items-center justify-center">
+                                <i class="${iconClass} ${iconColor} text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                                <span class="text-xs text-gray-500">${timeSince(notification.created_at)}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
+                            <div class="mt-2">
+                                <button class="mark-read-btn text-xs text-blue-600 hover:text-blue-800">
+                                    Marcar como leída
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ml-2 flex items-center">
+                            <span class="unread-dot w-2 h-2 bg-orange-500 rounded-full ${notification.read ? 'hidden' : ''}"></span>
+                        </div>
+                    </a>
+                `;
+                notificationsList.appendChild(li);
+            });
+
+            // Actualizar el estado después de renderizar
+            updateUnreadIndicator();
+            checkEmptyState();
+        }
+
+        // Función para obtener notificaciones del servidor
+        function fetchNotifications() {
+            fetch('/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderNotifications(data.notifications);
+                    } else {
+                        console.error('Error al cargar notificaciones:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error al obtener notificaciones:', error));
+        }
+
+        // Funcionalidad para marcar notificaciones individuales como leídas
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('mark-read-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const notificationItem = e.target.closest('.notification-item');
+                const notificationId = notificationItem.dataset.id;
+                
+                // Enviar solicitud al servidor para marcar como leída
+                fetch(`/notifications/${notificationId}/read`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar la UI: volver a cargar notificaciones
+                            fetchNotifications();
+                        } else {
+                            console.error('Error al marcar como leída:', data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error al marcar notificación:', error));
+            }
+        });
+
+        // Funcionalidad para marcar todas como leídas
+        document.getElementById('mark-all-read').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const unreadNotifications = document.querySelectorAll('.notification-item[data-read="false"]');
+            if (unreadNotifications.length === 0) return;
+
+            // Enviar solicitudes para marcar cada notificación como leída
+            const promises = Array.from(unreadNotifications).map(item => {
+                const notificationId = item.dataset.id;
+                return fetch(`/notifications/${notificationId}/read`, { method: 'POST' })
+                    .then(response => response.json());
+            });
+
+            Promise.all(promises)
+                .then(results => {
+                    const allSuccessful = results.every(result => result.success);
+                    if (allSuccessful) {
+                        fetchNotifications(); // Recargar notificaciones
+                    } else {
+                        console.error('Error al marcar todas las notificaciones como leídas');
+                    }
+                })
+                .catch(error => console.error('Error al marcar todas las notificaciones:', error));
+        });
+
+        // Función para actualizar el indicador global de no leídas
+        function updateUnreadIndicator() {
+            const unreadNotifications = document.querySelectorAll('.notification-item[data-read="false"]');
+            const unreadIndicator = document.getElementById('unread-indicator');
+            
+            if (unreadNotifications.length > 0) {
+                unreadIndicator.classList.remove('hidden');
+            } else {
+                unreadIndicator.classList.add('hidden');
+            }
+        }
+
+        // Verificar estado vacío
+        function checkEmptyState() {
+            const notificationsList = document.getElementById('notifications-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (notificationsList.children.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+        }
+
+        // Cargar notificaciones al iniciar
+        fetchNotifications();
+    });
+    </script>
 
 </body>
 </html>

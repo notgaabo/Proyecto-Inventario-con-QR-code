@@ -25,11 +25,12 @@ class InvoiceGenerator:
         cursor = connection.cursor(dictionary=True)
         try:
             query = """
-                SELECT s.id, s.sale_date, s.payment_method, s.sale_price, s.quantity, s.profit,
+                SELECT s.sale_group_id, s.sale_date, s.payment_method, s.sale_price, s.quantity, s.profit,
                        p.name AS product_name,
                        u.username AS seller_name,
                        c.name AS company_name,
-                       c.address AS company_address
+                       c.address AS company_address,
+                       c.phone AS company_phone
                 FROM sales s
                 JOIN products p ON s.product_id = p.id
                 JOIN users u ON s.user_id = u.id
@@ -76,7 +77,7 @@ class InvoiceGenerator:
             p.setFillColor(naranja_acento)
             p.rect(0, height - 15, width, 15, fill=True, stroke=False)
             
-            logo_path = "static/img/1.png"
+            logo_path = ""
             if os.path.exists(logo_path):
                 p.drawImage(logo_path, 40, height - 80, width=100, height=50, preserveAspectRatio=True)
             
@@ -92,7 +93,7 @@ class InvoiceGenerator:
             
             p.setFillColor(gris_oscuro)
             p.setFont("Helvetica-Bold", 12)
-            invoice_num = f"N° {ventas[0]['id']:06d}"
+            invoice_num = f"N° {ventas[0]['sale_group_id']:06d}"
             invoice_num_width = p.stringWidth(invoice_num, "Helvetica-Bold", 12)
             p.drawString(invoice_x + invoice_text_width - invoice_num_width, height - 90, invoice_num)
             
@@ -123,14 +124,22 @@ class InvoiceGenerator:
             
             p.setFillColor(negro)
             p.setFont("Helvetica-Bold", label_font_size)
-            p.drawString(right_column_x, y_info - 25, "Fecha y hora:")
+            p.drawString(right_column_x, y_info - 25, "Teléfono:")
             p.setFont("Helvetica", value_font_size)
-            p.drawString(right_column_x + 85, y_info - 25, f"{now.strftime('%d/%m/%Y %H:%M')}")
-            
-            p.setFillColor(gris_oscuro)
-            p.setFont("Helvetica", 8)
-            p.drawString(40, y_info - 45, "Calle de mi empresa, 85000 Mi población, España")
-            
+            phone_x = right_column_x + p.stringWidth("Teléfono: ", "Helvetica-Bold", label_font_size) + 5
+            phone_text = f"{first_sale['company_phone']}"
+            max_width = width - phone_x - 40 
+            phone_width = p.stringWidth(phone_text, "Helvetica", value_font_size)
+            if phone_width > max_width:
+                p.setFont("Helvetica", value_font_size - 2)  # Reducir fuente a 10
+                phone_width = p.stringWidth(phone_text, "Helvetica", value_font_size - 2)
+                if phone_width > max_width:
+                    while phone_width > max_width and len(phone_text) > 0:
+                        phone_text = phone_text[:-1]
+                        phone_width = p.stringWidth(phone_text + "...", "Helvetica", value_font_size - 2)
+                    phone_text += "..."
+            p.drawString(phone_x, y_info - 25, phone_text)
+           
             y_details = y_info - 65
             p.setFillColor(gris_claro)
             p.roundRect(40, y_details, width - 80, 30, 5, fill=True, stroke=False)
@@ -142,7 +151,12 @@ class InvoiceGenerator:
             p.drawString(payment_x, y_details + 10, "MÉTODO DE PAGO:")
             p.setFillColor(negro)
             p.setFont("Helvetica", 10)
-            p.drawString(payment_x + 100, y_details + 10, f"{first_sale['payment_method']}")
+            p.drawString(payment_x + 100, y_details + 10, {
+                'cash': 'Efectivo',
+                'transfer': 'Transferencia',
+                'stripe': 'Tarjeta de crédito/débito'
+            }.get(first_sale['payment_method'], first_sale['payment_method']))
+
             
             p.setFillColor(gris_oscuro)
             p.setFont("Helvetica-Bold", 10)
@@ -247,18 +261,23 @@ class InvoiceGenerator:
         if y - 60 < footer_y:
             p.showPage()
             y = height - 50
-        
+
         p.setStrokeColor(naranja_acento)
         p.setLineWidth(1)
         p.line(40, footer_y, width - 40, footer_y)
-        
+
         p.setFillColor(negro)
         p.setFont("Helvetica-Bold", 9)
         p.drawString(40, footer_y - 20, "GRACIAS POR SU COMPRA")
-        
+
         p.setFillColor(gris_oscuro)
         p.setFont("Helvetica", 8)
-        p.drawString(40, footer_y - 35, f"MÉTODO DE PAGO: {ventas[0]['payment_method']}")
+        p.drawString(40, footer_y - 35, f"MÉTODO DE PAGO: { {
+            'cash': 'Efectivo',
+            'transfer': 'Transferencia',
+            'stripe': 'Tarjeta de crédito/débito'
+        }.get(ventas[0]['payment_method'], ventas[0]['payment_method']) }")
+
         
         p.showPage()
         p.save()

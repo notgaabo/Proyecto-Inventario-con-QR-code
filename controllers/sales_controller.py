@@ -42,6 +42,11 @@ class SalesController:
                 with connection.cursor(dictionary=True) as cursor:
                     payment_data = {}
                     
+                    # Generar un sale_group_id único para esta venta
+                    cursor.execute("SELECT MAX(sale_group_id) FROM sales WHERE company_id = %s", (company_id,))
+                    last_group_id = cursor.fetchone()['MAX(sale_group_id)']
+                    sale_group_id = (last_group_id or 0) + 1
+
                     if payment_method == 'stripe':
                         if 'stripe_token' not in data:
                             return jsonify({'success': False, 'error': 'Falta el token de Stripe'}), 400
@@ -108,12 +113,12 @@ class SalesController:
                                 'error': f'Stock insuficiente para el producto {product_id}'
                             }), 400
 
-                        # Registrar la venta con company_id y user_id
+                        # Registrar la venta con company_id, user_id y sale_group_id
                         cursor.execute(
                             """INSERT INTO sales 
-                            (company_id, user_id, product_id, quantity, sale_price, sale_date, profit, payment_method)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                            (company_id, user_id, product_id, quantity, sale_price, sale_date, profit, payment_method)
+                            (company_id, user_id, product_id, quantity, sale_price, sale_date, profit, payment_method, sale_group_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                            (company_id, user_id, product_id, quantity, sale_price, sale_date, profit, payment_method, sale_group_id)
                         )
                         sale_id = cursor.lastrowid
                         sale_ids.append(sale_id)
@@ -154,6 +159,7 @@ class SalesController:
                 'success': True,
                 'message': 'Venta registrada con éxito',
                 'sale_ids': sale_ids,
+                'sale_group_id': sale_group_id,  # Incluimos el sale_group_id en la respuesta
                 **payment_data
             }), 200
 

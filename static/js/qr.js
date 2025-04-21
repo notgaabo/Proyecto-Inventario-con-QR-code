@@ -1,3 +1,5 @@
+// #qr.js
+
 document.addEventListener('DOMContentLoaded', () => {
     let lastScannedCode = null;
     let isProcessing = false;

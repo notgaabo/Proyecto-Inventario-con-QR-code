@@ -13,6 +13,9 @@ from controllers.company_controller import CompanyController
 from controllers.order_controller import OrderController
 from controllers.sales_prediction import SalesPrediction
 from controllers.invoice_controller import InvoiceGenerator
+from controllers.returns_controller import returnsController
+from controllers.supplier_controller import SupplierController
+from controllers.notifications_controller import notificationsController
 import time
 
 class InventoryApp(Flask):
@@ -58,6 +61,7 @@ class InventoryApp(Flask):
 
         # Rutas de productos (encargado de almacén, gerente, admin)
         self.add_url_rule('/product', 'product_list', ProductController.get_product_list, methods=['GET'])
+        self.add_url_rule('/product/<int:product_id>', 'get_product_by_id', ProductController.get_product_by_id, methods=['GET'])
         self.add_url_rule('/add_product', 'add_product', ProductController.add_product, methods=['GET', 'POST'])
         self.add_url_rule('/edit_product/<int:product_id>', 'edit_product', ProductController.update_product, methods=['GET', 'POST'])
         self.add_url_rule('/delete_product/<int:product_id>', 'delete_product', ProductController.delete_product, methods=['POST'])
@@ -71,14 +75,12 @@ class InventoryApp(Flask):
         self.add_url_rule('/checkout', 'checkout', LectorController.checkout, methods=['POST'])  # Añadida
         self.add_url_rule('/generate_qr/<int:product_id>', 'generate_qr', QrController.generate_qr)  # Añadida
 
-        # Ruta de las ordenes de empresas 
-                # Assuming this is in your Flask app initialization (e.g., app.py or similar)
+        # Rutas de órdenes de empresas 
         self.add_url_rule('/create_order', 'create_order', OrderController.create_order, methods=['GET', 'POST'])
         self.add_url_rule('/orders', 'order_list', OrderController.order_list, methods=['GET'])
         self.add_url_rule('/orders/receive_multiple', 'receive_multiple_orders', OrderController.receive_multiple_orders, methods=['POST'])  # New route
         self.add_url_rule('/orders/<int:order_id>', 'view_order', OrderController.view_order, methods=['GET'])
         self.add_url_rule('/get_order_details/<int:order_id>', 'get_order_details', OrderController.get_order_details, methods=['GET'])
-        # Optional: Keep this if you still need single-order receiving elsewhere
         self.add_url_rule('/receive_order', 'receive_order', OrderController.receive_order, methods=['GET', 'POST'])
         
         # Rutas de ventas (todos los roles autenticados)
@@ -86,7 +88,22 @@ class InventoryApp(Flask):
         self.add_url_rule('/sales_history', 'sales_history', ProductController.sales_history, methods=['GET'])
         self.add_url_rule('/factura', 'get_factura', InvoiceGenerator.get_factura, methods=['GET'])
 
-        # Gestión de empresas (solo admin)
+        # Devoluciones
+        self.add_url_rule('/return', 'returns_list', returnsController.return_list)
+        self.add_url_rule('/return/<int:return_id>', 'view_return', returnsController.view_return)
+        self.add_url_rule('/return', 'returns_list', returnsController.return_list)
+        self.add_url_rule('/return/new', 'returns_new', returnsController.add_return, methods=['GET', 'POST'])
+        self.add_url_rule('/api/sale/<int:sale_group_id>', 'get_sale_data', returnsController.get_sale_data, methods=['GET'])
+
+        # Suplidores
+        self.add_url_rule('/add_supplier', 'add_supplier', SupplierController.add_supplier, methods=['GET', 'POST'])
+        self.add_url_rule('/suppliers', 'supplier_list', SupplierController.supplier_list)
+
+        # Notificaciones
+        self.add_url_rule('/notifications', 'get_notifications', notificationsController.get_notifications, methods=['GET'])
+        self.add_url_rule('/notifications/<int:notification_id>/read', 'mark_notification_as_read', notificationsController.mark_notification_as_read, methods=['POST'])
+
+        # Gestión de empresas (solo admin)  
         self.add_url_rule('/manage_companies', 'manage_companies', CompanyController.manage_companies, methods=['GET'])
         self.add_url_rule('/edit_company', 'edit_company', CompanyController.edit_company, methods=['POST'])
         self.add_url_rule('/disable_company/<int:company_id>', 'disable_company', CompanyController.disable_company, methods=['GET'])

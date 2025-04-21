@@ -1,11 +1,9 @@
-# controllers/product_controller.py
 from flask import render_template, request, redirect, url_for, session, jsonify, make_response, flash
 from db import Config
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
-# Configuración de archivos
 UPLOAD_FOLDER = 'static/uploads'
 QR_FOLDER = 'static/qr_codes'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -14,12 +12,10 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 class ProductController:
     @staticmethod
     def _allowed_file(filename):
-        """Verifica si la extensión del archivo es permitida."""
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
     @staticmethod
     def _validate_product_data(name, category, price, stock, cost_price, supplier_id=None):
-        """Valida los datos del producto antes de procesarlos."""
         errors = []
         if not name or not name.strip():
             errors.append("El nombre es obligatorio")
@@ -39,7 +35,6 @@ class ProductController:
 
     @staticmethod
     def _get_db_connection():
-        """Obtiene una conexión a la base de datos con manejo de errores."""
         try:
             return Config.get_db_connection()
         except Exception as e:
@@ -48,7 +43,6 @@ class ProductController:
         
     @staticmethod
     def get_product_list():
-        """Lista los productos de la compañía del usuario autenticado con información del proveedor."""
         if 'user' not in session:
             return redirect(url_for('login'))
 
@@ -85,10 +79,44 @@ class ProductController:
             if 'connection' in locals():
                 connection.close()
 
-    # Resto de los métodos de ProductController (add_product, update_product, delete_product, etc.)
+    @staticmethod
+    def get_product_by_id(product_id):
+        if 'user' not in session:
+            return jsonify({'error': 'Usuario no autenticado'}), 401
+
+        company_id = session['user'].get('company_id')
+        if not company_id:
+            return jsonify({'error': 'No se encontró la compañía del usuario'}), 400
+
+        try:
+            connection = ProductController._get_db_connection()
+            if not connection.is_connected():
+                raise Exception("No se pudo conectar a la base de datos")
+
+            with connection.cursor(dictionary=True) as cursor:
+                query = """
+                    SELECT p.id, p.name, p.category, p.price, p.stock, p.cost_price, p.image, 
+                           p.supplier_id, p.company_id, s.name as supplier_name
+                    FROM products p
+                    LEFT JOIN suppliers s ON p.supplier_id = s.id
+                    WHERE p.company_id = %s AND p.id = %s
+                """
+                cursor.execute(query, (company_id, product_id))
+                product = cursor.fetchone()
+
+            if product:
+                return jsonify(product)
+            else:
+                return jsonify({'error': 'Producto no encontrado'}), 404
+        except Exception as e:
+            print(f"Error al obtener producto: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+        finally:
+            if 'connection' in locals():
+                connection.close()
+
     @staticmethod
     def add_product():
-        """Agrega un nuevo producto con validación, imagen y proveedor."""
         if 'user' not in session:
             return redirect(url_for('login'))
 
@@ -97,7 +125,6 @@ class ProductController:
 
         if request.method == 'POST':
             try:
-                # Obtener datos del formulario
                 name = request.form.get('name', '').strip()
                 category = request.form.get('category', '').strip()
                 price = float(request.form.get('price', 0))
@@ -105,14 +132,12 @@ class ProductController:
                 cost_price = float(request.form.get('cost_price', 0))
                 supplier_id = request.form.get('supplier_id', type=int)
 
-                # Validar datos
                 errors = ProductController._validate_product_data(name, category, price, stock, cost_price, supplier_id)
                 if errors:
                     for error in errors:
                         flash(error, "error")
                     return redirect(url_for('product_list'))
 
-                # Manejar imagen
                 image_filename = None
                 if 'image' in request.files:
                     file = request.files['image']
@@ -129,7 +154,6 @@ class ProductController:
                         file.save(os.path.join(UPLOAD_FOLDER, filename))
                         image_filename = filename
 
-                # Insertar en la base de datos
                 connection = ProductController._get_db_connection()
                 with connection.cursor() as cursor:
                     cursor.execute("""
@@ -138,6 +162,30 @@ class ProductController:
                     """, (name, category, price, stock, cost_price, image_filename, supplier_id, company_id))
                     connection.commit()
                     product_id = cursor.lastrowid
+
+                    # Create low stock notification if stock is below threshold
+                    if 'notifications' not in session:
+                        session['notifications'] = []
+                    if 'notification_counter' not in session:
+                        session['notification_counter'] = 0
+
+                    user_role = session['user']['role']
+                    roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
+                    threshold = 15
+                    if stock <= threshold and user_role in roles_to_notify_stock:
+                        session['notification_counter'] += 1
+                        notification = {
+                            'id': session['notification_counter'],
+                            'title': 'Stock Bajo',
+                            'message': f"El producto \"{name}\" tiene {stock} unidades en stock.",
+                            'type': 'stock_low',
+                            'reference_id': product_id,
+                            'created_at': datetime.now().isoformat(),
+                            'read': False
+                        }
+                        session['notifications'].append(notification)
+                        session.modified = True
+
                     print(f"Producto {name} (ID: {product_id}) agregado por usuario {user_id}")
                 
                 flash("Producto agregado exitosamente", "success")
@@ -156,7 +204,6 @@ class ProductController:
 
     @staticmethod
     def update_product(product_id):
-        """Actualiza un producto existente con validación y manejo de imagen."""
         if 'user' not in session:
             return redirect(url_for('login'))
 
@@ -212,7 +259,30 @@ class ProductController:
                     if cursor.rowcount == 0:
                         flash("Producto no encontrado", "error")
                         return redirect(url_for('product_list'))
-                
+
+                    # Create low stock notification if stock is below threshold
+                    if 'notifications' not in session:
+                        session['notifications'] = []
+                    if 'notification_counter' not in session:
+                        session['notification_counter'] = 0
+
+                    user_role = session['user']['role']
+                    roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
+                    threshold = 15
+                    if stock <= threshold and user_role in roles_to_notify_stock:
+                        session['notification_counter'] += 1
+                        notification = {
+                            'id': session['notification_counter'],
+                            'title': 'Stock Bajo',
+                            'message': f"El producto \"{name}\" tiene {stock} unidades en stock.",
+                            'type': 'stock_low',
+                            'reference_id': product_id,
+                            'created_at': datetime.now().isoformat(),
+                            'read': False
+                        }
+                        session['notifications'].append(notification)
+                        session.modified = True
+
                 flash("Producto actualizado exitosamente", "success")
                 return redirect(url_for('product_list'))
             except Exception as e:
@@ -247,7 +317,6 @@ class ProductController:
 
     @staticmethod
     def delete_product(product_id):
-        """Elimina un producto y sus archivos asociados."""
         if 'user' not in session:
             return jsonify({"success": False, "message": "No autenticado"}), 401
 
@@ -255,14 +324,12 @@ class ProductController:
         try:
             connection = ProductController._get_db_connection()
             with connection.cursor(dictionary=True) as cursor:
-                # Obtener información del producto
                 cursor.execute("SELECT image FROM products WHERE id = %s AND company_id = %s", 
                              (product_id, company_id))
                 product = cursor.fetchone()
                 if not product:
                     return jsonify({"success": False, "message": "Producto no encontrado"}), 404
 
-                # Eliminar archivos asociados
                 if product['image']:
                     image_path = os.path.join(UPLOAD_FOLDER, product['image'])
                     if os.path.exists(image_path):
@@ -274,7 +341,6 @@ class ProductController:
                     os.remove(qr_path)
                     print(f"QR eliminado: {qr_path}")
 
-                # Eliminar de la base de datos
                 cursor.execute("DELETE FROM products WHERE id = %s AND company_id = %s", 
                              (product_id, company_id))
                 connection.commit()
@@ -290,7 +356,6 @@ class ProductController:
 
     @staticmethod
     def filter_products():
-        """Filtra productos dinámicamente con parámetros del frontend."""
         if 'user' not in session:
             return jsonify({"success": False, "message": "No autenticado"}), 401
 
@@ -351,7 +416,6 @@ class ProductController:
 
     @staticmethod
     def sales_history():
-        """Muestra el historial de ventas con estadísticas y paginación."""
         if 'user' not in session:
             return redirect(url_for('login'))
 
@@ -363,13 +427,11 @@ class ProductController:
         try:
             connection = ProductController._get_db_connection()
             with connection.cursor(dictionary=True) as cursor:
-                # Contar total de registros
                 count_query = "SELECT COUNT(*) as total FROM sales WHERE company_id = %s"
                 cursor.execute(count_query, (company_id,))
                 total_rows = cursor.fetchone()['total']
                 total_pages = (total_rows + rows_per_page - 1) // rows_per_page
 
-                # Obtener ventas con filtros
                 query = """
                     SELECT s.*, p.name, p.cost_price 
                     FROM sales s
@@ -381,7 +443,6 @@ class ProductController:
                 cursor.execute(query, (company_id, rows_per_page, offset))
                 sales = cursor.fetchall()
 
-                # Calcular estadísticas
                 total_sales = sum(float(sale['sale_price']) * float(sale['quantity']) for sale in sales)
                 total_profit = sum((float(sale['sale_price']) - float(sale['cost_price'])) * float(sale['quantity']) 
                                  for sale in sales)
@@ -414,4 +475,4 @@ class ProductController:
                 total_rows=0
             )
         finally:
-                connection.close()
+            connection.close()

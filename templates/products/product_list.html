@@ -180,10 +180,10 @@
                 <div class="h-48 bg-gray-100 relative overflow-hidden">
                     <img src="{{ url_for('static', filename='uploads/' + (product.image if product.image else 'default.png')) }}" alt="{{ product.name }}" class="w-full h-full object-cover transition-all duration-500">
                     <!-- Etiqueta de stock -->
-                    <div class="absolute top-2 right-2 px-2 py-1 {% if product.stock == 0 %}bg-red-500{% else %}bg-green-500{% endif %} text-white text-xs font-medium rounded-full">
-                        {% if product.stock == 0 %}
+                    <div class="absolute top-2 right-2 px-2 py-1 {% if product.stock == 0 %}bg-red-500{% elif product.stock <= 15 %}bg-orange-500{% else %}bg-green-500{% endif %} text-white text-xs font-medium rounded-full">
+                    {% if product.stock == 0 %}
                             Agotado
-                        {% elif product.stock == 25 %}
+                        {% elif product.stock <= 15 %}
                             Stock Bajo
                         {% else %}
                             En stock
@@ -419,8 +419,8 @@
                 }
     
                 products.forEach(product => {
-                    const stockClass = product.stock === 0  ? 'bg-red-600' : product.stock < 5 ? 'bg-orange-500' : 'bg-green-500';
-                    const stockText = product.stock === 0 ? 'Agotado' : product.stock < 5 ? 'Stock Bajo' : 'En Stock'
+                    const stockClass = product.stock === 0  ? 'bg-red-600' : product.stock <= 15 ? 'bg-orange-500' : 'bg-green-500';
+                    const stockText = product.stock === 0 ? 'Agotado' : product.stock < 15 ? 'Stock Bajo' : 'En Stock'
                     const productHtml = `
                         <div class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
                             <div class="h-48 bg-gray-100 relative overflow-hidden">

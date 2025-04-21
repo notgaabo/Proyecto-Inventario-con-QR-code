@@ -1,3 +1,5 @@
+// #sales.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const checkoutBtn = document.getElementById('checkout_btn');
     const confirmCheckoutBtn = document.getElementById('confirm_checkout');
