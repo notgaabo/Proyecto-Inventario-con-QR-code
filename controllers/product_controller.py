@@ -40,7 +40,7 @@ class ProductController:
         except Exception as e:
             print(f"Error al conectar a la base de datos: {str(e)}")
             raise
-        
+    
     @staticmethod
     def get_product_list():
         if 'user' not in session:
@@ -59,7 +59,7 @@ class ProductController:
             with connection.cursor(dictionary=True) as cursor:
                 query = """
                     SELECT p.id, p.name, p.category, p.price, p.stock, p.cost_price, p.image, 
-                           p.supplier_id, p.company_id, s.name as supplier_name
+                        p.supplier_id, p.company_id, s.name as supplier_name
                     FROM products p
                     LEFT JOIN suppliers s ON p.supplier_id = s.id
                     WHERE p.company_id = %s
@@ -68,13 +68,20 @@ class ProductController:
                 cursor.execute(query, (company_id,))
                 products = cursor.fetchall()
             
-            response = make_response(render_template('products/product_list.html', products=products))
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            user_role = session['user']['role'].lower().strip()  # Normalizar el rol
+            print(f"Debug: Passing user_role to product_list template: {user_role}")  # Depuración
+            
+            response = make_response(render_template(
+                'products/product_list.html',
+                products=products,
+                user_role=user_role  # Pasar user_role explícitamente
+            ))
+            response.headers["Cache-Control"] = ["no-cache, no-store, must-revalidate"]
             return response
         except Exception as e:
             print(f"Error al listar productos: {str(e)}")
             flash(f"Error al cargar productos: {str(e)}", "error")
-            return render_template('products/product_list.html', products=[])
+            return render_template('products/product_list.html', products=[], user_role=session['user']['role'].lower().strip())
         finally:
             if 'connection' in locals():
                 connection.close()
@@ -128,11 +135,11 @@ class ProductController:
                 name = request.form.get('name', '').strip()
                 category = request.form.get('category', '').strip()
                 price = float(request.form.get('price', 0))
-                stock = int(request.form.get('stock', 0))
                 cost_price = float(request.form.get('cost_price', 0))
                 supplier_id = request.form.get('supplier_id', type=int)
 
-                errors = ProductController._validate_product_data(name, category, price, stock, cost_price, supplier_id)
+                # Validar datos con stock = 0
+                errors = ProductController._validate_product_data(name, category, price, 0, cost_price, supplier_id)
                 if errors:
                     for error in errors:
                         flash(error, "error")
@@ -159,36 +166,36 @@ class ProductController:
                     cursor.execute("""
                         INSERT INTO products (name, category, price, stock, cost_price, image, supplier_id, company_id)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (name, category, price, stock, cost_price, image_filename, supplier_id, company_id))
+                    """, (name, category, price, 0, cost_price, image_filename, supplier_id, company_id))
                     connection.commit()
                     product_id = cursor.lastrowid
 
-                    # Create low stock notification if stock is below threshold
-                    if 'notifications' not in session:
-                        session['notifications'] = []
-                    if 'notification_counter' not in session:
-                        session['notification_counter'] = 0
+                # Crear notificación para stock = 0
+                if 'notifications' not in session:
+                    session['notifications'] = []
+                if 'notification_counter' not in session:
+                    session['notification_counter'] = 0
 
-                    user_role = session['user']['role']
-                    roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
-                    threshold = 15
-                    if stock <= threshold and user_role in roles_to_notify_stock:
-                        session['notification_counter'] += 1
-                        notification = {
-                            'id': session['notification_counter'],
-                            'title': 'Stock Bajo',
-                            'message': f"El producto \"{name}\" tiene {stock} unidades en stock.",
-                            'type': 'stock_low',
-                            'reference_id': product_id,
-                            'created_at': datetime.now().isoformat(),
-                            'read': False
-                        }
-                        session['notifications'].append(notification)
-                        session.modified = True
+                user_role = session['user']['role'].lower().strip()
+                roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
+                if user_role in roles_to_notify_stock:
+                    session['notification_counter'] += 1
+                    notification = {
+                        'id': session['notification_counter'],
+                        'title': 'Producto Nuevo - Stock Cero',
+                        'message': f"El producto \"{name}\" se creó con 0 unidades. Realiza una orden para actualizar el stock.",
+                        'type': 'stock_zero',
+                        'reference_id': product_id,
+                        'created_at': datetime.now().isoformat(),
+                        'read': False
+                    }
+                    session['notifications'].append(notification)
+                    session.modified = True
 
-                    print(f"Producto {name} (ID: {product_id}) agregado por usuario {user_id}")
+                print(f"Producto {name} (ID: {product_id}) agregado por usuario {user_id}")
                 
-                flash("Producto agregado exitosamente", "success")
+                # Mensaje flash específico
+                flash("Producto agregado exitosamente. Debes realizar una orden para actualizar el stock.", "success")
                 return redirect(url_for('product_list'))
             except ValueError as ve:
                 flash(f"Error en los datos: {str(ve)}", "error")
@@ -201,7 +208,7 @@ class ProductController:
                 if 'connection' in locals():
                     connection.close()
         return redirect(url_for('product_list'))
-
+    
     @staticmethod
     def update_product(product_id):
         if 'user' not in session:

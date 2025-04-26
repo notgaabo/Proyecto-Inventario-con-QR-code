@@ -80,7 +80,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Motivo</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fecha</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Venta ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -92,22 +91,12 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ devolucion['reason'] }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ devolucion['created_at'] }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ devolucion['sale_id'] }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <a href="{{ url_for('view_return', return_id=devolucion['id']) }}" class="text-orange-500 hover:text-orange-700" title="Ver detalles">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </td>
                     </tr>
                     {% endfor %}
                     
                     {% if not devoluciones %}
                     <tr>
-                        <td colspan="7" class="px-6 py-10 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-10 text-center text-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -122,14 +111,43 @@
             </table>
         </div>
     </div>
+    
+    <!-- Paginación -->
+    {% if devoluciones_total > 10 %}
+    <div class="flex justify-between items-center mb-6">
+        <p class="text-sm text-gray-600">Mostrando {{ devoluciones|length }} de {{ devoluciones_total }} devoluciones</p>
+        <div class="flex space-x-1">
+            <!-- Anterior -->
+            {% if page > 1 %}
+            <a href="{{ url_for('returns_list', page=page-1, search=request.args.get('search', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="px-3 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50">« Anterior</a>
+            {% else %}
+            <span class="px-3 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">« Anterior</span>
+            {% endif %}
+            
+            <!-- Números de página -->
+            {% for p in range(1, (devoluciones_total // 10) + (1 if devoluciones_total % 10 else 0) + 1) %}
+            <a href="{{ url_for('returns_list', page=p, search=request.args.get('search', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="px-3 py-1 rounded border {% if p == page %}bg-orange-100 border-orange-200 text-orange-700{% else %}border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}">{{ p }}</a>
+            {% endfor %}
+            
+            <!-- Siguiente -->
+            {% if page < (devoluciones_total // 10) + (1 if devoluciones_total % 10 else 0) %}
+            <a href="{{ url_for('returns_list', page=page+1, search=request.args.get('search', ''), date_from=request.args.get('date_from', ''), date_to=request.args.get('date_to', '')) }}" class="px-3 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50">Siguiente »</a>
+            {% else %}
+            <span class="px-3 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">Siguiente »</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Código JavaScript para el manejo del formulario de búsqueda
     const searchForm = document.getElementById('searchForm');
-    
-    // Agregar más funcionalidad según sea necesario
+
+    // Manejo del formulario de búsqueda
+    searchForm.addEventListener('submit', function(e) {
+        // Opcional: Validar formulario antes de enviar
+    });
 });
 </script>
 {% endblock %}

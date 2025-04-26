@@ -1,162 +1,90 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Ventas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: '#FF7A00',
-                            dark: '#E56C00',
-                            light: '#FF9633'
-                        },
-                        dark: '#1A1A1A',
-                        light: '#FFFFFF',
-                        gray: {
-                            light: '#F4F4F4',
-                            DEFAULT: '#E0E0E0',
-                            dark: '#ACACAC'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Gráfico de Área con ApexCharts</title>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #chart {
+      max-width: 800px;
+      width: 100%;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-    <main class="flex-1 overflow-y-auto p-4">
-        <!-- Filter Bar -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <form method="GET" action="{{ url_for('product.sales_history') }}" class="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
-                <div class="flex-1">
-                    <label for="product-filter" class="block text-sm font-medium text-gray-dark mb-1">Producto</label>
-                    <div class="relative">
-                        <select id="product-filter" name="product" class="appearance-none w-full pl-3 pr-10 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary">
-                            <option value="all">Todos los productos</option>
-                            {% for product in products %}
-                                <option value="{{ product }}">Producto #{{ product }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex-1">
-                    <label for="date-start" class="block text-sm font-medium text-gray-dark mb-1">Fecha inicio</label>
-                    <input type="date" id="date-start" name="start_date" class="w-full pl-3 pr-3 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary">
-                </div>
-                
-                <div class="flex-1">
-                    <label for="date-end" class="block text-sm font-medium text-gray-dark mb-1">Fecha fin</label>
-                    <input type="date" id="date-end" name="end_date" class="w-full pl-3 pr-3 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary">
-                </div>
-                
-                <div class="flex-none">
-                    <button type="submit" id="apply-filters" class="bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-lg transition duration-150 ease-in-out flex items-center">
-                        <i class="fas fa-filter mr-2"></i>
-                        Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-primary bg-opacity-10 p-3 mr-4">
-                        <i class="fas fa-percentage text-primary"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-dark">Margen</p>
-                        <p class="text-2xl font-bold text-dark">{{ "%.2f"|format(profit_margin) }}%</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-primary bg-opacity-10 p-3 mr-4">
-                        <i class="fas fa-shopping-cart text-primary"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-dark">Promedio por Venta</p>
-                        <p class="text-2xl font-bold text-dark">${{ "%.2f"|format(avg_per_sale) }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-gray">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-dark">Transacciones</h2>
-                    <div class="flex space-x-2">
-                        <button class="p-2 rounded-lg bg-gray-light text-dark">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="p-2 rounded-lg bg-gray-light text-dark">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray">
-                    <thead class="bg-gray-light">
-                        <tr>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">ID Producto</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Cantidad</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Precio Unitario</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Fecha de Venta</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Total</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Ganancia</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray">
-                        {% for sale in sales %}
-                        <tr class="hover:bg-gray-light">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">#{{ sale.id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.product_id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.quantity }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">${{ "%.2f"|format(sale.unit_price) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.sale_date }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark font-medium">${{ "%.2f"|format(sale.total) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-primary font-medium">${{ "%.2f"|format(sale.profit) }}</td>
-                        </tr>
-                        {% endfor %}
-                        <tr class="bg-dark bg-opacity-5">
-                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-dark">TOTAL</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-dark">${{ "%.2f"|format(total_sales) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">${{ "%.2f"|format(total_profit) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-4 border-t border-gray flex items-center justify-between">
-                <div class="flex-1 text-sm text-gray-dark">
-                    Mostrando <span class="font-medium">1</span> a <span class="font-medium">{{ sales|length }}</span> de <span class="font-medium">{{ sales|length }}</span> resultados
-                </div>
-                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray bg-white text-sm font-medium text-gray-dark hover:bg-gray-light">
-                        <i class="fas fa-chevron-left text-xs"></i>
-                    </a>
-                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray bg-primary text-sm font-medium text-white">1</a>
-                    <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray bg-white text-sm font-medium text-gray-dark hover:bg-gray-light">
-                        <i class="fas fa-chevron-right text-xs"></i>
-                    </a>
-                </nav>
-            </div>
-        </div>
-    </main>
+
+<div id="chart"></div>
+
+<script>
+  var series = {
+    monthDataSeries1: {
+      prices: [
+        8100, 8120, 8200, 8220, 8240, 8280, 8260, 8250, 8290, 8300,
+        8310, 8340, 8320, 8360, 8380, 8400, 8420, 8450, 8430, 8460
+      ],
+      dates: [
+        "2025-03-01", "2025-03-02", "2025-03-03", "2025-03-04", "2025-03-05",
+        "2025-03-06", "2025-03-07", "2025-03-08", "2025-03-09", "2025-03-10",
+        "2025-03-11", "2025-03-12", "2025-03-13", "2025-03-14", "2025-03-15",
+        "2025-03-16", "2025-03-17", "2025-03-18", "2025-03-19", "2025-03-20"
+      ]
+    }
+  };
+
+  var options = {
+    series: [{
+      name: "STOCK ABC",
+      data: series.monthDataSeries1.prices
+    }],
+    chart: {
+      type: 'area',
+      height: 350,
+      zoom: {
+        enabled: false
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'straight'
+    },
+    title: {
+      text: 'Fundamental Analysis of Stocks',
+      align: 'left'
+    },
+    subtitle: {
+      text: 'Price Movements',
+      align: 'left'
+    },
+    labels: series.monthDataSeries1.dates,
+    xaxis: {
+      type: 'datetime',
+    },
+    yaxis: {
+      opposite: true
+    },
+    legend: {
+      horizontalAlign: 'left'
+    }
+  };
+
+  var chart = new ApexCharts(document.querySelector("#chart"), options);
+  chart.render();
+</script>
+
 </body>
 </html>

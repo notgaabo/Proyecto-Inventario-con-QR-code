@@ -12,7 +12,7 @@
             </svg>
             Registrar Nueva Orden
         </a>
-        {% endif %} 
+        {% endif %}
     </div>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -25,6 +25,14 @@
         {% endif %}
     {% endwith %}
     
+    <!-- Apartado de Órdenes de Hoy -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Órdenes de Hoy</h2>
+        <div id="todayOrders" class="space-y-4">
+            <!-- Órdenes se cargarán dinámicamente aquí -->
+        </div>
+    </div>
+
     <!-- Formulario de búsqueda y filtros -->
     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
         <form id="searchForm" method="GET" action="{{ url_for('order_list') }}" class="space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4">
@@ -159,47 +167,5 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('input[name="orderCheckbox"]');
-    const selectAll = document.getElementById('selectAll');
-    const receiveButton = document.getElementById('receiveButton');
-    const orderIdsInput = document.getElementById('orderIdsInput');
-
-    function updateButtonState() {
-        const checked = Array.from(checkboxes).some(cb => cb.checked);
-        receiveButton.disabled = !checked;
-    }
-
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateButtonState();
-            updateOrderIdsInput();
-        });
-    });
-
-    if (selectAll) {
-        selectAll.addEventListener('change', function() {
-            checkboxes.forEach(cb => cb.checked = selectAll.checked);
-            updateButtonState();
-            updateOrderIdsInput();
-        });
-    }
-
-    function updateOrderIdsInput() {
-        const selectedOrderIds = Array.from(checkboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
-        orderIdsInput.value = JSON.stringify(selectedOrderIds);
-    }
-
-    document.getElementById('receiveOrdersForm').addEventListener('submit', function(e) {
-        if (!orderIdsInput.value) {
-            e.preventDefault();
-            alert('Por favor, seleccione al menos una orden para marcar como entregada.');
-        }
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/order-list.js') }}"></script>
 {% endblock %}

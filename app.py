@@ -16,6 +16,7 @@ from controllers.invoice_controller import InvoiceGenerator
 from controllers.returns_controller import returnsController
 from controllers.supplier_controller import SupplierController
 from controllers.notifications_controller import notificationsController
+from controllers.qr_print_controller import QRCodePrinter
 import time
 
 class InventoryApp(Flask):
@@ -83,10 +84,15 @@ class InventoryApp(Flask):
         self.add_url_rule('/get_order_details/<int:order_id>', 'get_order_details', OrderController.get_order_details, methods=['GET'])
         self.add_url_rule('/receive_order', 'receive_order', OrderController.receive_order, methods=['GET', 'POST'])
         
-        # Rutas de ventas (todos los roles autenticados)
+        # Rutas de ventas (todos los roles autenticad   os)
         self.add_url_rule('/register_sale', 'register_sale', SalesController.register_sale, methods=['POST'])
         self.add_url_rule('/sales_history', 'sales_history', ProductController.sales_history, methods=['GET'])
+
+        #reportes
         self.add_url_rule('/factura', 'get_factura', InvoiceGenerator.get_factura, methods=['GET'])
+        self.add_url_rule('/last_delivered_products', 'last_delivered_products', QRCodePrinter.get_last_delivered_products, methods=['GET'])
+        self.add_url_rule('/print_qr_for_order', 'print_qr_for_order', QRCodePrinter.print_qr_for_order, methods=['GET'])
+        self.add_url_rule('/print_qr_for_product', 'print_qr_for_product', QRCodePrinter.print_qr_for_product, methods=['GET'])
 
         # Devoluciones
         self.add_url_rule('/return', 'returns_list', returnsController.return_list)
@@ -98,6 +104,7 @@ class InventoryApp(Flask):
         # Suplidores
         self.add_url_rule('/add_supplier', 'add_supplier', SupplierController.add_supplier, methods=['GET', 'POST'])
         self.add_url_rule('/suppliers', 'supplier_list', SupplierController.supplier_list)
+        self.add_url_rule('/suppliers/edit/<int:supplier_id>', 'edit_supplier', SupplierController.edit_supplier, methods=['GET', 'POST'])
 
         # Notificaciones
         self.add_url_rule('/notifications', 'get_notifications', notificationsController.get_notifications, methods=['GET'])
@@ -114,15 +121,14 @@ class InventoryApp(Flask):
 
 app = InventoryApp()
 
-
 @app.before_request
 def check_user_status():
     session.permanent = True
 
     if request.endpoint is None:
-        return redirect(url_for('login'))
+        return app.page_not_found(e=None)
 
-    if 'user' not in session and request.endpoint not in ['login', 'disabled_user_error']:
+    if 'user' not in session and request.endpoint not in ['login', 'disabled_user_error', 'static']:
         return redirect(url_for('login'))
 
     if 'user' in session:
