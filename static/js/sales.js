@@ -1,5 +1,3 @@
-// #sales.js
-
 document.addEventListener('DOMContentLoaded', () => {
     const checkoutBtn = document.getElementById('checkout_btn');
     const confirmCheckoutBtn = document.getElementById('confirm_checkout');
@@ -66,18 +64,31 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Método de pago cambiado a:', e.target.value);
     });
 
-    const calculateItemTotal = (price, quantity) => (Number(price) || 0) * (Number(quantity) || 0);
+    const calculateItemTotal = (price, quantity) => {
+        const subtotal = (Number(price) || 0) * (Number(quantity) || 0);
+        const itbisRate = 0.18; // 18% ITBIS
+        const itbis = subtotal * itbisRate;
+        const total = subtotal + itbis;
+        return { subtotal, itbis, total };
+    };
 
     const updateCartTotal = () => {
         const items = cartContainer.querySelectorAll('div[data-product-id]');
+        let subtotal = 0;
+        let totalItbis = 0;
         let total = 0;
+
         items.forEach(item => {
             const price = parseFloat(item.querySelector('.text-gray-600')?.textContent.replace(/[^0-9.]/g, '') || '0');
             const quantity = parseInt(item.querySelector('input')?.value || '0');
-            total += calculateItemTotal(price, quantity);
+            const { subtotal: itemSubtotal, itbis: itemItbis, total: itemTotal } = calculateItemTotal(price, quantity);
+            subtotal += itemSubtotal;
+            totalItbis += itemItbis;
+            total += itemTotal;
         });
+
         cartTotalElement.textContent = `Total: $${total.toFixed(2)}`;
-        console.log('Total del carrito actualizado:', total);
+        console.log('Total del carrito actualizado:', { subtotal, totalItbis, total });
         return total;
     };
 
@@ -89,22 +100,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadCartData = () => {
         const modalProducts = document.getElementById('modal_products');
-        if (!modalProducts) {
-            console.warn('modal_products no encontrado');
+        const modalTotal = document.getElementById('modal_total');
+        
+        if (!modalProducts || !modalTotal) {
+            console.warn('modal_products o modal_total no encontrado');
             return;
         }
 
         modalProducts.innerHTML = '';
+        let subtotal = 0;
+        let totalItbis = 0;
         let total = 0;
         const cartItems = cartContainer.querySelectorAll('div[data-product-id]');
 
         if (!cartItems.length) {
             modalProducts.innerHTML = '<p class="text-gray-500">No hay productos en el carrito.</p>';
+            modalTotal.innerHTML = `
+                <div class="flex justify-between text-lg font-bold">
+                    <span>Total a Pagar:</span>
+                    <span class="text-orange-600">$0.00</span>
+                </div>
+            `;
         } else {
             cartItems.forEach(item => {
                 const price = parseFloat(item.querySelector('.text-gray-600')?.textContent.replace(/[^0-9.]/g, '') || '0');
                 const quantity = parseInt(item.querySelector('input')?.value || '0');
-                const itemTotal = calculateItemTotal(price, quantity);
+                const { subtotal: itemSubtotal, itbis: itemItbis, total: itemTotal } = calculateItemTotal(price, quantity);
+                subtotal += itemSubtotal;
+                totalItbis += itemItbis;
                 total += itemTotal;
 
                 const productName = item.querySelector('.font-semibold')?.textContent || 'Producto desconocido';
@@ -115,10 +138,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             });
+
+            modalTotal.innerHTML = `
+                <div class="flex justify-between text-base font-medium">
+                    <span>Subtotal:</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between text-base font-medium mt-1">
+                    <span>ITBIS (18%):</span>
+                    <span>$${totalItbis.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold mt-2">
+                    <span>Total a Pagar:</span>
+                    <span class="text-orange-600">$${total.toFixed(2)}</span>
+                </div>
+            `;
         }
 
-        document.getElementById('modal_total').textContent = `$${total.toFixed(2)}`;
-        console.log('Datos del carrito cargados en el modal, total:', total);
+        console.log('Datos del carrito cargados en el modal:', { subtotal, totalItbis, total });
         return total;
     };
 
@@ -150,13 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const productId = item.dataset.productId;
                     const quantity = parseInt(item.querySelector('input')?.value || '0');
                     const salePrice = parseFloat(item.querySelector('.text-gray-600')?.textContent.replace(/[^0-9.]/g, '') || '0');
-                    const profit = salePrice * 0.20;
+                    const profit = sale.WordPress * 0.20;
+                    const { subtotal, itbis, total } = calculateItemTotal(salePrice, quantity);
 
                     return productId && quantity > 0 && salePrice > 0 ? {
                         product_id: productId,
                         quantity,
                         sale_price: salePrice,
-                        profit
+                        profit,
+                        subtotal,
+                        itbis,
+                        total
                     } : null;
                 })
                 .filter(item => item !== null);
