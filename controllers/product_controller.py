@@ -3,6 +3,7 @@ from db import Config
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from controllers.notifications_controller import NotificationsController
 
 UPLOAD_FOLDER = 'static/uploads'
 QR_FOLDER = 'static/qr_codes'
@@ -44,13 +45,16 @@ class ProductController:
     @staticmethod
     def get_product_list():
         if 'user' not in session:
+            print("No hay usuario en la sesión, redirigiendo a login")  # Depuración
             return redirect(url_for('login'))
 
         company_id = session['user'].get('company_id')
         if not company_id:
+            print("No se encontró company_id en la sesión")  # Depuración
             flash("No se encontró la compañía del usuario", "error")
             return redirect(url_for('login'))
 
+        connection = None
         try:
             connection = ProductController._get_db_connection()
             if not connection.is_connected():
@@ -67,34 +71,42 @@ class ProductController:
                 """
                 cursor.execute(query, (company_id,))
                 products = cursor.fetchall()
-            
-            user_role = session['user']['role'].lower().strip()  # Normalizar el rol
-            print(f"Debug: Passing user_role to product_list template: {user_role}")  # Depuración
+                print(f"Productos obtenidos: {products}")  # Depuración
+
+                # Verificar bajo stock para todos los productos
+                NotificationsController.check_low_stock(products)
+
+            user_role = session['user']['role'].lower().strip()
+            print(f"Renderizando product_list con user_role: {user_role}")  # Depuración
             
             response = make_response(render_template(
                 'products/product_list.html',
                 products=products,
-                user_role=user_role  # Pasar user_role explícitamente
+                user_role=user_role
             ))
-            response.headers["Cache-Control"] = ["no-cache, no-store, must-revalidate"]
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             return response
         except Exception as e:
-            print(f"Error al listar productos: {str(e)}")
+            print(f"Error al listar productos: {str(e)}")  # Depuración
             flash(f"Error al cargar productos: {str(e)}", "error")
             return render_template('products/product_list.html', products=[], user_role=session['user']['role'].lower().strip())
         finally:
-            if 'connection' in locals():
+            if connection and connection.is_connected():
                 connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración
 
     @staticmethod
     def get_product_by_id(product_id):
         if 'user' not in session:
+            print("No hay usuario en la sesión para get_product_by_id")  # Depuración
             return jsonify({'error': 'Usuario no autenticado'}), 401
 
         company_id = session['user'].get('company_id')
         if not company_id:
+            print("No se encontró company_id en la sesión")  # Depuración
             return jsonify({'error': 'No se encontró la compañía del usuario'}), 400
 
+        connection = None
         try:
             connection = ProductController._get_db_connection()
             if not connection.is_connected():
@@ -112,34 +124,41 @@ class ProductController:
                 product = cursor.fetchone()
 
             if product:
+                print(f"Producto encontrado: {product}")  # Depuración
+                # Verificar bajo stock para este producto
+                NotificationsController.check_low_stock([product])
                 return jsonify(product)
             else:
+                print(f"Producto no encontrado: ID {product_id}")  # Depuración
                 return jsonify({'error': 'Producto no encontrado'}), 404
         except Exception as e:
-            print(f"Error al obtener producto: {str(e)}")
+            print(f"Error al obtener producto {product_id}: {str(e)}")  # Depuración
             return jsonify({'error': str(e)}), 500
         finally:
-            if 'connection' in locals():
+            if connection and connection.is_connected():
                 connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración
 
     @staticmethod
     def add_product():
         if 'user' not in session:
+            print("No hay usuario en la sesión, redirigiendo a login")  # Depuración
             return redirect(url_for('login'))
 
         company_id = session['user'].get('company_id')
         user_id = session['user'].get('id')
 
         if request.method == 'POST':
+            connection = None
             try:
                 name = request.form.get('name', '').strip()
                 category = request.form.get('category', '').strip()
                 price = float(request.form.get('price', 0))
                 cost_price = float(request.form.get('cost_price', 0))
                 supplier_id = request.form.get('supplier_id', type=int)
+                stock = 0  # Stock inicial es 0
 
-                # Validar datos con stock = 0
-                errors = ProductController._validate_product_data(name, category, price, 0, cost_price, supplier_id)
+                errors = ProductController._validate_product_data(name, category, price, stock, cost_price, supplier_id)
                 if errors:
                     for error in errors:
                         flash(error, "error")
@@ -166,57 +185,41 @@ class ProductController:
                     cursor.execute("""
                         INSERT INTO products (name, category, price, stock, cost_price, image, supplier_id, company_id)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (name, category, price, 0, cost_price, image_filename, supplier_id, company_id))
+                    """, (name, category, price, stock, cost_price, image_filename, supplier_id, company_id))
                     connection.commit()
                     product_id = cursor.lastrowid
 
-                # Crear notificación para stock = 0
-                if 'notifications' not in session:
-                    session['notifications'] = []
-                if 'notification_counter' not in session:
-                    session['notification_counter'] = 0
-
-                user_role = session['user']['role'].lower().strip()
-                roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
-                if user_role in roles_to_notify_stock:
-                    session['notification_counter'] += 1
-                    notification = {
-                        'id': session['notification_counter'],
-                        'title': 'Producto Nuevo - Stock Cero',
-                        'message': f"El producto \"{name}\" se creó con 0 unidades. Realiza una orden para actualizar el stock.",
-                        'type': 'stock_zero',
-                        'reference_id': product_id,
-                        'created_at': datetime.now().isoformat(),
-                        'read': False
-                    }
-                    session['notifications'].append(notification)
-                    session.modified = True
-
-                print(f"Producto {name} (ID: {product_id}) agregado por usuario {user_id}")
+                # Verificar bajo stock para el nuevo producto
+                product = {'id': product_id, 'name': name, 'stock': stock}
+                NotificationsController.check_low_stock([product])
                 
-                # Mensaje flash específico
+                print(f"Producto {name} (ID: {product_id}) agregado por usuario {user_id}")  # Depuración
                 flash("Producto agregado exitosamente. Debes realizar una orden para actualizar el stock.", "success")
                 return redirect(url_for('product_list'))
             except ValueError as ve:
+                print(f"Error en los datos al agregar producto: {str(ve)}")  # Depuración
                 flash(f"Error en los datos: {str(ve)}", "error")
                 return redirect(url_for('product_list'))
             except Exception as e:
-                print(f"Error al agregar producto: {str(e)}")
+                print(f"Error al agregar producto: {str(e)}")  # Depuración
                 flash(f"Error al agregar producto: {str(e)}", "error")
                 return redirect(url_for('product_list'))
             finally:
-                if 'connection' in locals():
+                if connection and connection.is_connected():
                     connection.close()
+                    print("Conexión a la base de datos cerrada")  # Depuración
         return redirect(url_for('product_list'))
     
     @staticmethod
     def update_product(product_id):
         if 'user' not in session:
+            print("No hay usuario en la sesión, redirigiendo a login")  # Depuración
             return redirect(url_for('login'))
 
         company_id = session['user'].get('company_id')
         
         if request.method == 'POST':
+            connection = None
             try:
                 name = request.form.get('name', '').strip()
                 category = request.form.get('category', '').strip()
@@ -267,39 +270,23 @@ class ProductController:
                         flash("Producto no encontrado", "error")
                         return redirect(url_for('product_list'))
 
-                    # Create low stock notification if stock is below threshold
-                    if 'notifications' not in session:
-                        session['notifications'] = []
-                    if 'notification_counter' not in session:
-                        session['notification_counter'] = 0
+                # Verificar bajo stock para el producto actualizado
+                product = {'id': product_id, 'name': name, 'stock': stock}
+                NotificationsController.check_low_stock([product])
 
-                    user_role = session['user']['role']
-                    roles_to_notify_stock = ['gerente', 'admin', 'encargado de almacén']
-                    threshold = 15
-                    if stock <= threshold and user_role in roles_to_notify_stock:
-                        session['notification_counter'] += 1
-                        notification = {
-                            'id': session['notification_counter'],
-                            'title': 'Stock Bajo',
-                            'message': f"El producto \"{name}\" tiene {stock} unidades en stock.",
-                            'type': 'stock_low',
-                            'reference_id': product_id,
-                            'created_at': datetime.now().isoformat(),
-                            'read': False
-                        }
-                        session['notifications'].append(notification)
-                        session.modified = True
-
+                print(f"Producto {product_id} actualizado: {product}")  # Depuración
                 flash("Producto actualizado exitosamente", "success")
                 return redirect(url_for('product_list'))
             except Exception as e:
-                print(f"Error al actualizar producto {product_id}: {str(e)}")
+                print(f"Error al actualizar producto {product_id}: {str(e)}")  # Depuración
                 flash(f"Error al actualizar: {str(e)}", "error")
                 return redirect(url_for('update_product', product_id=product_id))
             finally:
-                if 'connection' in locals():
+                if connection and connection.is_connected():
                     connection.close()
+                    print("Conexión a la base de datos cerrada")  # Depuración
 
+        connection = None
         try:
             connection = ProductController._get_db_connection()
             with connection.cursor(dictionary=True) as cursor:
@@ -311,23 +298,28 @@ class ProductController:
                 """, (product_id, company_id))
                 product = cursor.fetchone()
                 if not product:
+                    print(f"Producto no encontrado para edición: ID {product_id}")  # Depuración
                     flash("Producto no encontrado", "error")
                     return redirect(url_for('product_list'))
+                print(f"Cargando producto para edición: {product}")  # Depuración
             return render_template('products/edit_product.html', product=product)
         except Exception as e:
-            print(f"Error al cargar producto {product_id}: {str(e)}")
+            print(f"Error al cargar producto {product_id} para edición: {str(e)}")  # Depuración
             flash(f"Error al cargar producto: {str(e)}", "error")
             return redirect(url_for('product_list'))
         finally:
-            if 'connection' in locals():
+            if connection and connection.is_connected():
                 connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración
 
     @staticmethod
     def delete_product(product_id):
         if 'user' not in session:
+            print("No hay usuario en la sesión para delete_product")  # Depuración
             return jsonify({"success": False, "message": "No autenticado"}), 401
 
         company_id = session['user'].get('company_id')
+        connection = None
         try:
             connection = ProductController._get_db_connection()
             with connection.cursor(dictionary=True) as cursor:
@@ -335,40 +327,44 @@ class ProductController:
                              (product_id, company_id))
                 product = cursor.fetchone()
                 if not product:
+                    print(f"Producto no encontrado para eliminación: ID {product_id}")  # Depuración
                     return jsonify({"success": False, "message": "Producto no encontrado"}), 404
 
                 if product['image']:
                     image_path = os.path.join(UPLOAD_FOLDER, product['image'])
                     if os.path.exists(image_path):
                         os.remove(image_path)
-                        print(f"Imagen eliminada: {image_path}")
+                        print(f"Imagen eliminada: {image_path}")  # Depuración
 
                 qr_path = os.path.join(QR_FOLDER, f"{product_id}.png")
                 if os.path.exists(qr_path):
                     os.remove(qr_path)
-                    print(f"QR eliminado: {qr_path}")
+                    print(f"QR eliminado: {qr_path}")  # Depuración
 
                 cursor.execute("DELETE FROM products WHERE id = %s AND company_id = %s", 
                              (product_id, company_id))
                 connection.commit()
                 
-                print(f"Producto {product_id} eliminado exitosamente")
+                print(f"Producto {product_id} eliminado exitosamente")  # Depuración
                 return jsonify({"success": True, "message": "Producto eliminado"})
         except Exception as e:
-            print(f"Error al eliminar producto {product_id}: {str(e)}")
+            print(f"Error al eliminar producto {product_id}: {str(e)}")  # Depuración
             return jsonify({"success": False, "message": f"Error al eliminar: {str(e)}"}), 500
         finally:
-            if 'connection' in locals():
+            if connection and connection.is_connected():
                 connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración
 
     @staticmethod
     def filter_products():
         if 'user' not in session:
+            print("No hay usuario en la sesión para filter_products")  # Depuración
             return jsonify({"success": False, "message": "No autenticado"}), 401
 
         company_id = session['user'].get('company_id')
         data = request.get_json() or {}
 
+        connection = None
         try:
             search = data.get('search', '').lower()
             category = data.get('category', 'all')
@@ -413,17 +409,22 @@ class ProductController:
             with connection.cursor(dictionary=True) as cursor:
                 cursor.execute(query, params)
                 products = cursor.fetchall()
+                print(f"Productos filtrados: {products}")  # Depuración
+                # Verificar bajo stock para los productos filtrados
+                NotificationsController.check_low_stock(products)
             return jsonify({"success": True, "productos": products})
         except Exception as e:
-            print(f"Error al filtrar productos: {str(e)}")
+            print(f"Error al filtrar productos: {str(e)}")  # Depuración
             return jsonify({"success": False, "message": f"Error al filtrar: {str(e)}"}), 500
         finally:
-            if 'connection' in locals():
+            if connection and connection.is_connected():
                 connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración
 
     @staticmethod
     def sales_history():
         if 'user' not in session:
+            print("No hay usuario en la sesión, redirigiendo a login")  # Depuración
             return redirect(url_for('login'))
 
         company_id = session['user'].get('company_id')
@@ -431,6 +432,7 @@ class ProductController:
         rows_per_page = 10
         offset = (page - 1) * rows_per_page
 
+        connection = None
         try:
             connection = ProductController._get_db_connection()
             with connection.cursor(dictionary=True) as cursor:
@@ -449,6 +451,7 @@ class ProductController:
                 """
                 cursor.execute(query, (company_id, rows_per_page, offset))
                 sales = cursor.fetchall()
+                print(f"Historial de ventas: {sales}")  # Depuración
 
                 total_sales = sum(float(sale['sale_price']) * float(sale['quantity']) for sale in sales)
                 total_profit = sum((float(sale['sale_price']) - float(sale['cost_price'])) * float(sale['quantity']) 
@@ -468,7 +471,7 @@ class ProductController:
                 total_rows=total_rows
             )
         except Exception as e:
-            print(f"Error al cargar historial de ventas: {str(e)}")
+            print(f"Error al cargar historial de ventas: {str(e)}")  # Depuración
             flash(f"Error al cargar historial: {str(e)}", "error")
             return render_template(
                 'products/sales_history.html',
@@ -482,4 +485,6 @@ class ProductController:
                 total_rows=0
             )
         finally:
-            connection.close()
+            if connection and connection.is_connected():
+                connection.close()
+                print("Conexión a la base de datos cerrada")  # Depuración

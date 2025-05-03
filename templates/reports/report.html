@@ -1,0 +1,278 @@
+{% extends 'includes/base_user.html' %}
+<script src="https://cdn.tailwindcss.com"></script>
+
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 w-80">
+                {% for category, message in messages %}
+                    <div class="mb-3 p-4 rounded-lg shadow-lg border-l-4 {% if category == 'error' %}bg-red-50 border-red-500 text-red-700{% else %}bg-green-50 border-green-500 text-green-700{% endif %} animate-pulse">
+                        <div class="flex items-center">
+                            {% if category == 'error' %}
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            {% else %}
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            {% endif %}
+                            <p class="font-medium">{{ message }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen pb-12">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <header class="mb-10 text-center">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Panel de Reportes</h1>
+                <div class="w-20 h-1 bg-orange-500 mx-auto"></div>
+            </header>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <!-- Sección Métodos de Pago -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="bg-orange-100 px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="bg-white rounded-full p-2 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-xl font-bold text-gray-800">Métodos de Pago</h2>
+                        </div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='payment_methods') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Métodos Más Utilizados</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='payment_distribution') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Distribución de Pagos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='payment_trends') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Tendencias de Métodos</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Sección Devoluciones -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="bg-orange-100 px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="bg-white rounded-full p-2 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-xl font-bold text-gray-800">Devoluciones</h2>
+                        </div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='returns_history') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Historial de Devoluciones</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='returns_reasons') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Motivos de Devolución</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='returns_by_product') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Análisis por Producto</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Sección Ventas -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="bg-orange-100 px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="bg-white rounded-full p-2 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-xl font-bold text-gray-800">Ventas</h2>
+                        </div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='weekly') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Ventas Semanales</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='monthly') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Ventas Mensuales</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='quarterly') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Ventas Trimestrales</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Sección Inventario -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="bg-orange-100 px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="bg-white rounded-full p-2 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-xl font-bold text-gray-800">Inventario</h2>
+                        </div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='stock_in') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Entrada de Productos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='stock_out') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Salida de Productos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='inventory') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Balance de Inventario</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Sección Proveedores -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div class="bg-orange-100 px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="bg-white rounded-full p-2 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h2 class="ml-3 text-xl font-bold text-gray-800">Proveedores</h2>
+                        </div>
+                    </div>
+                    <div class="px-6 py-5">
+                        <ul class="space-y-3">
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='active_suppliers') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Proveedores Más Activos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='supplier_deliveries') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Entregas por Proveedor</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('generate_report', report_type='supplier_performance') }}" class="flex items-center text-gray-600 hover:text-orange-600 group">
+                                    <span class="flex-shrink-0 w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </span>
+                                    <span class="font-medium">Desempeño de Proveedores</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

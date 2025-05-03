@@ -17,7 +17,6 @@ config.py
 # Reportes y archivos generados
 *.pdf
 *.csv
-*.txt
 
 # Archivos ignorados específicos
 .gitignore

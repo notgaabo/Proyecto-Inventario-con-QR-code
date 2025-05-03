@@ -1,0 +1,120 @@
+{% extends 'includes/base_admin.html' %}
+
+{% block content %}
+
+    <div class="p-6 bg-gray-50 min-h-screen">
+        <div class="max-w-5xl mx-auto">
+                
+            <!-- Sección de Empresas Activas -->
+            <div class="mb-8 relative">
+                <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-orange-400 pb-2 inline-block mb-6">
+                    Empresas Activas
+                </h2>
+                <a href="{{ url_for('create_company') }}"
+                   class="absolute right-0 top-0 inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded hover:bg-orange-600 transition-colors duration-150 ease-in-out">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nueva Empresa
+                </a>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-10">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Industria</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Dirección</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-100 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for company in active_companies %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ company.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{{ company.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ company.industry or 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ company.address or 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    <a href="{{ url_for('company_details', company_id=company.id) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors duration-150 ease-in-out mr-2">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        Ver
+                                    </a>
+                                    <a href="{{ url_for('disable_company', company_id=company.id) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gray-600 rounded hover:bg-gray-700 transition-colors duration-150 ease-in-out">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                        </svg>
+                                        Desactivar
+                                    </a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay empresas activas</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sección de Empresas Deshabilitadas -->
+            <div class="mb-8 relative">
+                <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-orange-400 pb-2 inline-block mb-6">
+                    Empresas Deshabilitadas
+                </h2>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Industria</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-100 uppercase tracking-wider">Dirección</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-100 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for company in disabled_companies %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ company.id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">{{ company.name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ company.industry or 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ company.address or 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    <a href="{{ url_for('company_details', company_id=company.id) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors duration-150 ease-in-out mr-2">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        Ver
+                                    </a>
+                                    <a href="{{ url_for('enable_company', company_id=company.id) }}"
+                                       class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-orange-500 rounded hover:bg-orange-600 transition-colors duration-150 ease-in-out">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Activar
+                                    </a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay empresas deshabilitadas</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

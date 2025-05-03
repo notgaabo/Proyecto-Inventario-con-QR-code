@@ -30,7 +30,7 @@ class SalesPrediction:
             os.makedirs(static_folder)
             print(f"Carpeta '{static_folder}' creada")
 
-        # Obtener company_id desde la sesión con validación explícita
+        # Obtener company_id desde la sesión
         try:
             if 'user' not in session:
                 print("Error: No se encontró 'user' en la sesión.")
@@ -48,72 +48,60 @@ class SalesPrediction:
             print(f"Error al acceder a la sesión: {str(e)}")
             return None
 
-        # Obtener datos de ventas y devoluciones filtrados por company_id
+        # Consulta combinada para ventas y devoluciones
+        query = """
+        SELECT 
+            DATE_FORMAT(s.sale_date, '%Y-%m') AS month,
+            COALESCE(SUM(s.quantity), 0) AS quantity_sales,
+            COALESCE(SUM(r.quantity), 0) AS quantity_returns
+        FROM sales s
+        LEFT JOIN returns r 
+            ON DATE_FORMAT(s.sale_date, '%Y-%m') = DATE_FORMAT(r.created_at, '%Y-%m')
+            AND r.company_id = %s
+        WHERE s.company_id = %s
+        GROUP BY DATE_FORMAT(s.sale_date, '%Y-%m')
+        ORDER BY month
+        """
         try:
-            connection = Config.get_db_connection()
-            cursor = connection.cursor(dictionary=True)
-            
-            # Consulta de ventas filtrada por company_id
-            cursor.execute("SELECT sale_date, quantity FROM sales WHERE company_id = %s", (company_id,))
-            sales_results = cursor.fetchall()
-            
-            # Consulta de devoluciones filtrada por company_id
-            cursor.execute("SELECT created_at, quantity FROM returns WHERE company_id = %s", (company_id,))
-            returns_results = cursor.fetchall()
-            
-            cursor.close()
-            connection.close()
-            print(f"Datos cargados para company_id {company_id}: {len(sales_results)} ventas, {len(returns_results)} devoluciones")
+            with Config.get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(query, (company_id, company_id))
+                results = cursor.fetchall()
+            print(f"Datos cargados para company_id {company_id}: {len(results)} registros")
         except Exception as e:
             print(f"Error al obtener datos para company_id {company_id}: {str(e)}")
             return None
 
-        if not sales_results:
-            print(f"No se encontraron datos de ventas para company_id {company_id}.")
+        if not results:
+            print(f"No se encontraron datos para company_id {company_id}.")
             return None
 
-        # Preprocesamiento de ventas
-        df_sales = parade = pd.DataFrame(sales_results)
-        df_sales['sale_date'] = pd.to_datetime(df_sales['sale_date'])
-        df_sales['month'] = df_sales['sale_date'].dt.to_period('M')
-
-        # Preprocesamiento de devoluciones
-        df_returns = pd.DataFrame(returns_results) if returns_results else pd.DataFrame(columns=['created_at', 'quantity'])
-        if not df_returns.empty:
-            df_returns['created_at'] = pd.to_datetime(df_returns['created_at'])
-            df_returns['month'] = df_returns['created_at'].dt.to_period('M')
-
-        # Agrupar ventas por mes
-        ventas_mensuales = df_sales.groupby('month')['quantity'].sum().reset_index()
-        
-        # Agrupar devoluciones por mes
-        devoluciones_mensuales = df_returns.groupby('month')['quantity'].sum().reset_index() if not df_returns.empty else pd.DataFrame(columns=['month', 'quantity'])
-
-        # Combinar ventas y devoluciones
-        ventas_mensuales = ventas_mensuales.merge(devoluciones_mensuales, on='month', how='left', suffixes=('_sales', '_returns'))
-        ventas_mensuales['quantity_returns'] = ventas_mensuales['quantity_returns'].fillna(0)
-        ventas_mensuales['net_quantity'] = ventas_mensuales['quantity_sales'] - ventas_mensuales['quantity_returns']
-        
-        # Filtrar meses con ventas netas positivas o cero
-        ventas_mensuales = ventas_mensuales[ventas_mensuales['net_quantity'] >= 0]
-        if ventas_mensuales.empty:
-            print(f"No hay datos de ventas netas válidos para company_id {company_id} después de descontar devoluciones.")
+        # Preprocesamiento de datos
+        df = pd.DataFrame(results)
+        df['month'] = pd.to_datetime(df['month'])
+        # Convertir quantity_sales y quantity_returns a float
+        df['quantity_sales'] = df['quantity_sales'].astype(float)
+        df['quantity_returns'] = df['quantity_returns'].astype(float)
+        df['net_quantity'] = df['quantity_sales'] - df['quantity_returns']
+        df = df[df['net_quantity'] >= 0]
+        if df.empty:
+            print(f"No hay datos de ventas netas válidos para company_id {company_id}.")
             return None
 
-        ventas_mensuales['month_num'] = np.arange(len(ventas_mensuales))
-        print(f"Datos procesados para company_id {company_id}: {len(ventas_mensuales)} meses con registros analizados")
+        df['month_num'] = np.arange(len(df))
+        print(f"Datos procesados para company_id {company_id}: {len(df)} meses")
 
-        X = ventas_mensuales[['month_num']]
-        y = ventas_mensuales['net_quantity']
+        X = df[['month_num']]
+        y = df['net_quantity']
 
         # Calcular tiempo desde la última venta
-        last_sale_date = df_sales['sale_date'].max()
-        months_since_last_sale = (datetime.now() - last_sale_date).days / 30.42  # Aproximación de meses
-        decay_factor = max(0.5, 1 - 0.1 * months_since_last_sale)  # Reduce 10% por mes, mínimo 50%
+        last_sale_date = df['month'].max()
+        months_since_last_sale = (datetime.now() - last_sale_date).days / 30.42
+        decay_factor = max(0.5, 1 - 0.1 * months_since_last_sale)
         print(f"Tiempo desde última venta para company_id {company_id}: {months_since_last_sale:.2f} meses, factor de decaimiento: {decay_factor:.2f}")
 
         # Modelo polinomial
-        n_points = len(ventas_mensuales)
+        n_points = len(df)
         optimal_degree = min(3, n_points - 1)
         if n_points < 2:
             print(f"Datos insuficientes para una parábola para company_id {company_id}. Se necesita al menos 2 puntos.")
@@ -131,12 +119,12 @@ class SalesPrediction:
         print(f"Modelo entrenado para company_id {company_id} - MSE: {mse:.2f}, R²: {r2:.4f}")
 
         # Predicción para el próximo mes
-        next_index = len(ventas_mensuales)
+        next_index = len(df)
         X_future = np.array([[next_index]])
         X_future_poly = poly.transform(X_future)
-        predicted = max(0, model.predict(X_future_poly)[0] * decay_factor)  # Aplicar decaimiento
-        next_month = ventas_mensuales['month'].iloc[-1] + 1
-        print(f"Predicción para {next_month} (company_id {company_id}): {predicted:.2f} (con decaimiento)")
+        predicted = max(0, model.predict(X_future_poly)[0] * decay_factor)
+        next_month = df['month'].iloc[-1] + pd.offsets.MonthBegin(1)
+        print(f"Predicción para {next_month.strftime('%Y-%m')} (company_id {company_id}): {predicted:.2f} (con decaimiento)")
 
         # Visualización
         plt.figure(figsize=(14, 8))
@@ -148,7 +136,7 @@ class SalesPrediction:
         X_plot_poly = poly.transform(X_plot)
         y_plot = model.predict(X_plot_poly)
         if decay_factor < 1:
-            y_plot = y_plot * decay_factor  # Ajustar curva predicha
+            y_plot = y_plot * decay_factor
 
         plt.plot(X_plot, y_plot, color=SalesPrediction.COLORS['trend'], 
                  linewidth=3, label='Tendencia de ventas netas', alpha=0.8)
@@ -173,7 +161,7 @@ class SalesPrediction:
         plt.xlabel('Meses con Registros', fontsize=14, labelpad=10)
         plt.ylabel('Volumen de Ventas Netas', fontsize=14, labelpad=10)
 
-        month_labels = ventas_mensuales['month'].astype(str).tolist() + [str(next_month)]
+        month_labels = df['month'].dt.strftime('%Y-%m').tolist() + [next_month.strftime('%Y-%m')]
         plt.xticks(range(len(month_labels)), month_labels, rotation=45, ha='right')
 
         plt.legend(loc='upper left', frameon=True, facecolor='white',
@@ -184,7 +172,7 @@ class SalesPrediction:
                  color=SalesPrediction.COLORS['grid'])
 
         # Anotación de predicción
-        annotation_text = f'🔮 Predicción para {next_month}:\nSe estima una venta neta\naproximada de {predicted:.2f} productos'
+        annotation_text = f'🔮 Predicción para {next_month.strftime("%Y-%m")}:\nSe estima una venta neta\naproximada de {predicted:.2f} productos'
         if decay_factor < 1:
             annotation_text += f'\n(Ajustado por {months_since_last_sale:.1f} meses sin ventas)'
         

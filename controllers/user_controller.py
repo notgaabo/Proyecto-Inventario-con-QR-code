@@ -4,61 +4,6 @@ from db.config import Config
 
 class UserController:
     @staticmethod
-    def admin_dashboard():
-        """Display the admin dashboard with a list of companies and their users."""
-        if 'user' not in session:
-            return redirect(url_for('login'))
-
-        user_role = session['user'].get('role')
-        user_company_id = session['user'].get('company_id')
-
-        # Solo permitir acceso a admins
-        if user_role != 'admin':
-            return redirect(url_for('forbidden_error'))
-
-        try:
-            with Config.get_db_connection() as connection:
-                with connection.cursor(dictionary=True) as cursor:
-                    # Admin global (company_id = None) ve todas las empresas
-                    if user_company_id is None:
-                        cursor.execute("SELECT * FROM companies")
-                        companies = cursor.fetchall()
-                    # Admin de empresa solo ve su empresa
-                    else:
-                        cursor.execute("SELECT * FROM companies WHERE id = %s", (user_company_id,))
-                        companies = cursor.fetchall()
-
-                    active_companies = [c for c in companies if c.get('is_active', 1) == 1]
-                    disabled_companies = [c for c in companies if c.get('is_active', 1) == 0]
-
-                    for company in companies:
-                        cursor.execute(
-                            "SELECT id, username, email, role, is_active FROM users WHERE company_id = %s",
-                            (company['id'],)
-                        )
-                        company['users'] = cursor.fetchall()
-
-                    # Solo admins globales ven usuarios sin empresa (company_id = None)
-                    if user_company_id is None:
-                        cursor.execute(
-                            "SELECT id, username, email, role, is_active FROM users WHERE company_id IS NULL"
-                        )
-                        global_users = cursor.fetchall()
-                    else:
-                        global_users = []
-
-        except Exception as e:
-            flash(f"Error loading dashboard: {str(e)}", "error")
-            return render_template('admin/dashboard.html', active_companies=[], disabled_companies=[], global_users=[])
-
-        return render_template(
-            'admin/dashboard.html',
-            active_companies=active_companies,
-            disabled_companies=disabled_companies,
-            global_users=global_users
-        )
-
-    @staticmethod
     def company_details(company_id):
         """Display detailed view of a company with its users."""
         if 'user' not in session or session['user'].get('role') != 'admin':
@@ -111,7 +56,7 @@ class UserController:
             
             if not name:
                 flash("Company name is required", "error")
-                return render_template('admin/company_create.html')
+                return render_template('admin/company/company_create.html')
 
             try:
                 company_id = Company.insert_company(name, industry, address, phone)
@@ -119,9 +64,9 @@ class UserController:
                 return redirect(url_for('create_users_for_company', company_id=company_id))
             except Exception as e:
                 flash(f"Error creating company: {str(e)}", "error")
-                return render_template('admin/company_create.html')
+                return render_template('admin/company/company_create.html')
 
-        return render_template('admin/company_create.html')
+        return render_template('admin/company/company_create.html')
 
     @staticmethod
     def create_users_for_company(company_id):

@@ -55,7 +55,7 @@
     <!-- Modal de Confirmación -->
     <div id="checkout-modal" tabindex="-1" aria-hidden="true" 
          class="fixed hidden inset-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto h-full bg-black/50">
-        <div class="relative w-full max-w-md mx-auto">
+        <div class="relative w-full max-w-2xl mx-auto">
             <div class="bg-white rounded-lg shadow-lg">
                 <div class="flex items-center justify-between p-5 border-b border-gray-200 rounded-t">
                     <h3 class="text-xl font-semibold text-gray-900">
@@ -88,10 +88,27 @@
                     </div>
 
                     <div id="transfer_form" class="mt-4 hidden">
-                        <input type="text" id="account_number" placeholder="Número de cuenta" class="w-full p-2 mt-2 border border-gray-300 rounded-md">
-                        <input type="text" id="bank_name" placeholder="Nombre del banco" class="w-full p-2 mt-2 border border-gray-300 rounded-md">
-                        <input type="date" id="transfer_date" class="w-full p-2 mt-2 border border-gray-300 rounded-md">
-                        <input type="text" id="reference_number" placeholder="Número de referencia" class="w-full p-2 mt-2 border border-gray-300 rounded-md">
+                        <input type="text" id="account_number" placeholder="Número de cuenta" 
+                               class="w-full p-2 mt-2 border border-gray-300 rounded-md" 
+                               pattern="[0-9]*" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" 
+                               autocomplete="off" 
+                               required>
+                        <input type="text" id="bank_name" placeholder="Nombre del banco" 
+                               class="w-full p-2 mt-2 border border-gray-300 rounded-md" 
+                               autocomplete="off" 
+                               required>
+                        <input type="text" id="transfer_date" placeholder="Fecha de transferencia" 
+                               class="w-full p-2 mt-2 border border-gray-300 rounded-md" 
+                               readonly 
+                               autocomplete="off" 
+                               required>
+                        <input type="text" id="reference_number" placeholder="Número de referencia" 
+                               class="w-full p-2 mt-2 border border-gray-300 rounded-md" 
+                               pattern="[0-9]*" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')" 
+                               autocomplete="off" 
+                               required>
                     </div>
 
                     <div id="stripe_form" class="mt-4 hidden">
@@ -115,6 +132,15 @@
 <script>
     const stripePublicKey = '{{ stripe_public_key }}';
     console.log('stripePublicKey cargado:', stripePublicKey);
+
+    // Configurar la fecha actual en el campo transfer_date
+    document.addEventListener('DOMContentLoaded', () => {
+        const transferDateInput = document.getElementById('transfer_date');
+        if (transferDateInput) {
+            const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            transferDateInput.value = today; // Establecer fecha actual
+        }
+    });
 </script>
 <script src="{{ url_for('static', filename='js/sales.js') }}" onerror="console.error('Error al cargar sales.js')"></script>
 <script src="{{ url_for('static', filename='js/qr.js') }}" onerror="console.error('Error al cargar qr.js')"></script>

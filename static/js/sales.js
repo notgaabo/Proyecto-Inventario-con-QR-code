@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const productId = item.dataset.productId;
                     const quantity = parseInt(item.querySelector('input')?.value || '0');
                     const salePrice = parseFloat(item.querySelector('.text-gray-600')?.textContent.replace(/[^0-9.]/g, '') || '0');
-                    const profit = sale.WordPress * 0.20;
+                    const profit = salePrice * 0.20;
                     const { subtotal, itbis, total } = calculateItemTotal(salePrice, quantity);
 
                     return productId && quantity > 0 && salePrice > 0 ? {
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!itemsToSend.length) {
                 alert('No hay productos válidos para registrar.');
                 return;
-            }
+leo            }
 
             let payload = { 
                 items: itemsToSend, 
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.sale_ids && data.sale_ids.length > 0) {
                         const saleIdsParam = data.sale_ids.join(',');
                         const invoiceUrl = `/factura?ids=${saleIdsParam}`;
-                        console.log('Generando descarga de factura con todos los IDs:', invoiceUrl);
+                        console.log('Generando descarga de factura con todos los IDs:', invoiceUrl)
 
                         const link = document.createElement('a');
                         link.href = invoiceUrl;

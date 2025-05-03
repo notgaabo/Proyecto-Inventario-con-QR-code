@@ -17,11 +17,12 @@ class CompanyController:
                     active_companies = cursor.fetchall()
                     cursor.execute("SELECT id, name, industry, address, phone FROM companies WHERE is_active = 0")
                     disabled_companies = cursor.fetchall()
-            return render_template('admin/dashboard.html', 
+            return render_template('admin/company/manage_company.html', 
                                  active_companies=active_companies, 
                                  disabled_companies=disabled_companies)
         except Exception as e:
             flash(f"Error al cargar empresas: {str(e)}", "error")
+            return redirect(url_for('manage_companies'))
 
     @staticmethod
     def create_company():
@@ -99,38 +100,44 @@ class CompanyController:
 
     @staticmethod
     def disable_company(company_id):
-        """Deshabilita una empresa"""
+        """Deshabilita una empresa y sus usuarios asociados"""
         if 'user' not in session or session['user'].get('role') != 'admin':
             return redirect(url_for('login'))
 
         try:
             with Config.get_db_connection() as connection:
                 with connection.cursor() as cursor:
+                    # Desactivar la empresa
                     cursor.execute("UPDATE companies SET is_active = 0 WHERE id = %s", (company_id,))
+                    # Desactivar los usuarios asociados a la empresa
+                    cursor.execute("UPDATE users SET is_active = 0 WHERE company_id = %s", (company_id,))
                     connection.commit()
                     if cursor.rowcount == 0:
                         flash("Empresa no encontrada", "error")
                     else:
-                        flash("Empresa desactivada exitosamente", "success")
+                        flash("Empresa y sus usuarios desactivados exitosamente", "success")
         except Exception as e:
             flash(f"Error al desactivar empresa: {str(e)}", "error")
         return redirect(url_for('manage_companies'))
 
     @staticmethod
     def enable_company(company_id):
-        """Habilita una empresa"""
+        """Habilita una empresa y sus usuarios asociados"""
         if 'user' not in session or session['user'].get('role') != 'admin':
             return redirect(url_for('login'))
 
         try:
             with Config.get_db_connection() as connection:
                 with connection.cursor() as cursor:
+                    # Activar la empresa
                     cursor.execute("UPDATE companies SET is_active = 1 WHERE id = %s", (company_id,))
+                    # Activar los usuarios asociados a la empresa
+                    cursor.execute("UPDATE users SET is_active = 1 WHERE company_id = %s", (company_id,))
                     connection.commit()
                     if cursor.rowcount == 0:
                         flash("Empresa no encontrada", "error")
                     else:
-                        flash("Empresa activada exitosamente", "success")
+                        flash("Empresa y sus usuarios activados exitosamente", "success")
         except Exception as e:
             flash(f"Error al activar empresa: {str(e)}", "error")
         return redirect(url_for('manage_companies'))
