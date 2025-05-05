@@ -20,6 +20,25 @@
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Animación suave para elementos interactivos */
+        button, a, .filter-option {
+            transition: all 0.25s ease;
+        }
+        button:hover, a:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Destacar la fila al hacer hover */
+        tr:hover td {
+            background-color: rgba(255, 122, 0, 0.05);
+        }
+        
+        /* Estilo especial para totales */
+        .total-row {
+            box-shadow: 0 2px 5px rgba(255, 122, 0, 0.3);
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -30,62 +49,28 @@
             </div>
         {% endif %}
 
-        <!-- Filter Bar -->
-        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <form method="GET" action="{{ url_for('sales_history') }}" class="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
-                <div class="flex-1">
-                    <label for="product-filter" class="block text-sm font-medium text-gray-dark mb-1">Producto</label>
-                    <div class="relative">
-                        <select id="product-filter" name="product" class="appearance-none w-full pl-3 pr-10 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary">
-                            <option value="all">Todos los productos</option>
-                            {% if sales %}
-                                {% for sale in sales|unique(attribute='product_id') %}
-                                    <option value="{{ sale.product_id }}">Producto #{{ sale.product_id }}</option>
-                                {% endfor %}
-                            {% endif %}
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <label for="date-start" class="block text-sm font-medium text-gray-dark mb-1">Fecha inicio</label>
-                    <input type="date" id="date-start" name="start_date" class="w-full pl-3 pr-3 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary" value="{{ request.args.get('start_date', '') }}">
-                </div>
-                <div class="flex-1">
-                    <label for="date-end" class="block text-sm font-medium text-gray-dark mb-1">Fecha fin</label>
-                    <input type="date" id="date-end" name="end_date" class="w-full pl-3 pr-3 py-3 border-0 bg-gray-light rounded-lg focus:ring-2 focus:ring-primary" value="{{ request.args.get('end_date', '') }}">
-                </div>
-                <div class="flex-none">
-                    <button type="submit" class="bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-lg transition duration-150 ease-in-out flex items-center">
-                        <i class="fas fa-filter mr-2"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
                 <div class="flex items-center">
-                    <div class="rounded-full bg-primary bg-opacity-10 p-3 mr-4">
-                        <i class="fas fa-percentage text-primary"></i>
+                    <div class="rounded-full bg-orange-100 p-3 mr-4">
+                        <i class="fas fa-percentage text-orange-500 text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-dark">Margen</p>
-                        <p class="text-2xl font-bold text-dark">{{ "%.2f"|format(profit_margin|default(0)) }}%</p>
+                        <p class="text-sm text-gray-600">Margen</p>
+                        <p class="text-2xl font-bold text-orange-500">{{ "%.2f"|format(profit_margin|default(0)) }}%</p>
                     </div>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
                 <div class="flex items-center">
-                    <div class="rounded-full bg-primary bg-opacity-10 p-3 mr-4">
-                        <i class="fas fa-shopping-cart text-primary"></i>
+                    <div class="rounded-full bg-orange-100 p-3 mr-4">
+                        <i class="fas fa-shopping-cart text-orange-500 text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-dark">Promedio por Venta</p>
-                        <p class="text-2xl font-bold text-dark">${{ "%.2f"|format(avg_per_sale|default(0)) }}</p>
+                        <p class="text-sm text-gray-600">Promedio por Venta</p>
+                        <p class="text-2xl font-bold text-orange-500">${{ "%.2f"|format(avg_per_sale|default(0)) }}</p>
                     </div>
                 </div>
             </div>
@@ -93,89 +78,192 @@
 
         <!-- Table -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-gray">
+            <div class="p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-dark">Transacciones</h2>
+                    <h2 class="text-lg font-semibold text-gray-800">Transacciones <span class="text-orange-500 font-normal">| Historial de Ventas</span></h2>
                     <div class="flex space-x-2">
-                        <button class="p-2 rounded-lg bg-gray-light text-dark"><i class="fas fa-download"></i></button>
+                        <button class="p-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all duration-300 shadow-md">
+                            <i class="fas fa-download"></i>
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray">
-                    <thead class="bg-gray-light">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">ID Producto</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Cantidad</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Precio de Venta</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Fecha de Venta</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Total</th>
-                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-dark uppercase tracking-wider">Ganancia</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID Producto</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cantidad</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Precio de Venta</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de Venta</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ganancia</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray">
+                    <tbody class="bg-white divide-y divide-gray-200">
                         {% for sale in sales %}
-                        <tr class="hover:bg-gray-light">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">#{{ sale.id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.product_id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.quantity }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">${{ "%.2f"|format(sale.sale_price) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark">{{ sale.sale_date }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-dark font-medium">${{ "%.2f"|format(sale.sale_price * sale.quantity) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-primary font-medium">${{ "%.2f"|format(sale.profit|default(0)) }}</td>
+                        <tr class="hover:bg-gray-50 transition-colors duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">#{{ sale.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ sale.product_id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ sale.quantity }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${{ "%.2f"|format(sale.sale_price) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{{ sale.sale_date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium">${{ "%.2f"|format(sale.sale_price * sale.quantity) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-orange-500 font-medium">${{ "%.2f"|format(sale.profit|default(0)) }}</td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-dark">No hay ventas disponibles</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No hay ventas disponibles</td>
                         </tr>
                         {% endfor %}
-                        <tr class="bg-dark bg-opacity-5">
-                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-dark">TOTAL</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-dark">${{ "%.2f"|format(total_sales|default(0)) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">${{ "%.2f"|format(total_profit|default(0)) }}</td>
+                        <tr class="bg-orange-50 border-l-4 border-orange-500">
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">TOTAL</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-500">${{ "%.2f"|format(total_sales|default(0)) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-500">${{ "%.2f"|format(total_profit|default(0)) }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-gray flex items-center justify-between">
-                <div class="flex-1 text-sm text-gray-dark">
-                    Mostrando <span class="font-medium">{{ ((page - 1) * 10) + 1 }}</span> a 
-                    <span class="font-medium">{{ ((page - 1) * 10) + sales|length }}</span> de 
-                    <span class="font-medium">{{ total_rows }}</span> resultados
+            <div class="p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between">
+                <div class="flex-1 text-sm text-gray-500 mb-4 sm:mb-0">
+                    Mostrando <span class="font-medium text-orange-500">{{ ((page - 1) * 10) + 1 }}</span> a 
+                    <span class="font-medium text-orange-500">{{ ((page - 1) * 10) + sales|length }}</span> de 
+                    <span class="font-medium text-orange-500">{{ total_rows }}</span> resultados
                 </div>
                 <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <!-- First Page Button -->
+                    {% if page > 1 %}
+                    <a href="{{ url_for('sales_history', page=1, product=request.args.get('product'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}" 
+                       class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-orange-50 hover:text-orange-500 transition-colors duration-200">
+                        <i class="fas fa-angle-double-left text-xs"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                        <i class="fas fa-angle-double-left text-xs"></i>
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Previous Page Button -->
                     {% if page > 1 %}
                     <a href="{{ url_for('sales_history', page=page-1, product=request.args.get('product'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}" 
-                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray bg-white text-sm font-medium text-gray-dark hover:bg-gray-light">
+                       class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-orange-50 hover:text-orange-500 transition-colors duration-200">
                         <i class="fas fa-chevron-left text-xs"></i>
                     </a>
                     {% else %}
-                    <span class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray bg-gray-light text-sm font-medium text-gray-dark cursor-not-allowed">
+                    <span class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
                         <i class="fas fa-chevron-left text-xs"></i>
                     </span>
                     {% endif %}
                     
-                    <!-- Update the pagination links with hover effects -->
-                    {% for p in range(1, total_pages + 1) %}
+                    <!-- Pagination Logic - Show max 5 pages at a time -->
+                    {% set start_page = [page - 2, 1]|max %}
+                    {% set end_page = [start_page + 4, total_pages]|min %}
+                    {% set start_page = [end_page - 4, 1]|max %}
+                    
+                    {% for p in range(start_page, end_page + 1) %}
                     <a href="{{ url_for('sales_history', page=p, product=request.args.get('product'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}" 
-                    class="relative inline-flex items-center px-4 py-2 border border-gray {{ 'bg-primary text-red-500' if p == page else 'bg-white text-gray-dark hover:transform transition duration-300 hover:scale-105 hover:-translate-y-1 hover:bg-gray-400' }} text-sm font-medium transition duration-150 ease-in-out">
+                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 {{ 'bg-orange-500 text-white font-bold' if p == page else 'bg-white text-gray-500 hover:bg-orange-50 hover:text-orange-500' }} text-sm font-medium transition-all duration-200">
                         {{ p }}
                     </a>
                     {% endfor %}
                     
+                    <!-- Next Page Button -->
                     {% if page < total_pages %}
                     <a href="{{ url_for('sales_history', page=page+1, product=request.args.get('product'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}" 
-                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray bg-white text-sm font-medium text-gray-dark hover:bg-gray-light">
+                       class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-orange-50 hover:text-orange-500 transition-colors duration-200">
                         <i class="fas fa-chevron-right text-xs"></i>
                     </a>
                     {% else %}
-                    <span class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray bg-gray-light text-sm font-medium text-gray-dark cursor-not-allowed">
+                    <span class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
                         <i class="fas fa-chevron-right text-xs"></i>
+                    </span>
+                    {% endif %}
+                    
+                    <!-- Last Page Button -->
+                    {% if page < total_pages %}
+                    <a href="{{ url_for('sales_history', page=total_pages, product=request.args.get('product'), start_date=request.args.get('start_date'), end_date=request.args.get('end_date')) }}" 
+                       class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-orange-50 hover:text-orange-500 transition-colors duration-200">
+                        <i class="fas fa-angle-double-right text-xs"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                        <i class="fas fa-angle-double-right text-xs"></i>
                     </span>
                     {% endif %}
                 </nav>
             </div>
         </div>
     </main>
+
+    <script>
+        // Script para manejar los círculos de selección
+        document.addEventListener('DOMContentLoaded', function() {
+            const productCircle = document.getElementById('product-circle');
+            const startDateCircle = document.getElementById('start-date-circle');
+            const endDateCircle = document.getElementById('end-date-circle');
+            
+            // Función para cambiar el color del círculo
+            function toggleCircle(circle) {
+                if (circle.classList.contains('bg-orange-500')) {
+                    circle.classList.remove('bg-orange-500');
+                    circle.classList.add('bg-black');
+                } else {
+                    circle.classList.remove('bg-black');
+                    circle.classList.add('bg-orange-500');
+                }
+            }
+            
+            // Eventos de clic para cada círculo
+            productCircle.addEventListener('click', function() {
+                toggleCircle(this);
+                document.getElementById('product-filter').focus();
+            });
+            
+            startDateCircle.addEventListener('click', function() {
+                toggleCircle(this);
+                document.getElementById('date-start').focus();
+            });
+            
+            endDateCircle.addEventListener('click', function() {
+                toggleCircle(this);
+                document.getElementById('date-end').focus();
+            });
+            
+            // Cambiar círculos automáticamente cuando se enfocan los inputs
+            document.getElementById('product-filter').addEventListener('focus', function() {
+                if (!productCircle.classList.contains('bg-black')) {
+                    toggleCircle(productCircle);
+                }
+            });
+            
+            document.getElementById('date-start').addEventListener('focus', function() {
+                if (!startDateCircle.classList.contains('bg-black')) {
+                    toggleCircle(startDateCircle);
+                }
+            });
+            
+            document.getElementById('date-end').addEventListener('focus', function() {
+                if (!endDateCircle.classList.contains('bg-black')) {
+                    toggleCircle(endDateCircle);
+                }
+            });
+            
+            // Establecer círculo como negro si el campo ya tiene un valor
+            if (document.getElementById('product-filter').value !== 'all') {
+                productCircle.classList.remove('bg-orange-500');
+                productCircle.classList.add('bg-black');
+            }
+            
+            if (document.getElementById('date-start').value) {
+                startDateCircle.classList.remove('bg-orange-500');
+                startDateCircle.classList.add('bg-black');
+            }
+            
+            if (document.getElementById('date-end').value) {
+                endDateCircle.classList.remove('bg-orange-500');
+                endDateCircle.classList.add('bg-black');
+            }
+        });
+    </script>
 {% endblock %}

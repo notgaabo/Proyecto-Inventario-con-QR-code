@@ -42,7 +42,7 @@ class AuthController:
                 elif role == 'vendedor':
                     return redirect(url_for('inventory'))
                 elif role == 'encargado de almacén':
-                    return redirect(url_for('product_list'))
+                    return redirect(url_for('order_list'))
                 elif role == 'gerente':
                     return redirect(url_for('statistics'))
 

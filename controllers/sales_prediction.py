@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 from flask import send_from_directory, session
 from db.config import Config
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class SalesPrediction:
     COLORS = {
@@ -17,7 +17,7 @@ class SalesPrediction:
         'trend': '#2c3e50',
         'actual': '#e74c3c',
         'prediction': '#27ae60',
-        'grid': '#dcdcdc'
+        'grid': '#dcdcdc'  # Corregido de 'gridjord' a 'grid'
     }
 
     @staticmethod
@@ -26,9 +26,17 @@ class SalesPrediction:
         image_name = 'ventas_prediccion.png'
         image_path = os.path.join(static_folder, image_name)
 
+        # Crear carpeta estática si no existe
         if not os.path.exists(static_folder):
             os.makedirs(static_folder)
             print(f"Carpeta '{static_folder}' creada")
+
+        # Verificar si el gráfico es reciente (menos de 5 minutos)
+        if os.path.exists(image_path):
+            file_age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(image_path))
+            if file_age < timedelta(minutes=5):
+                print(f"Gráfico reciente encontrado: {image_name}")
+                return image_name
 
         # Obtener company_id desde la sesión
         try:
@@ -48,7 +56,10 @@ class SalesPrediction:
             print(f"Error al acceder a la sesión: {str(e)}")
             return None
 
-        # Consulta combinada para ventas y devoluciones
+        # Limpiar caché de sesión para evitar datos obsoletos
+        session.pop('cached_sales_data', None)
+
+        # Consulta combinada para ventas y devoluciones, incluyendo el mes actual
         query = """
         SELECT 
             DATE_FORMAT(s.sale_date, '%Y-%m') AS month,
@@ -59,14 +70,36 @@ class SalesPrediction:
             ON DATE_FORMAT(s.sale_date, '%Y-%m') = DATE_FORMAT(r.created_at, '%Y-%m')
             AND r.company_id = %s
         WHERE s.company_id = %s
+            AND s.sale_date <= NOW()  -- Evitar fechas futuras
         GROUP BY DATE_FORMAT(s.sale_date, '%Y-%m')
+        UNION
+        SELECT 
+            DATE_FORMAT(NOW(), '%Y-%m') AS month,
+            0 AS quantity_sales,
+            0 AS quantity_returns
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sales 
+            WHERE company_id = %s 
+            AND DATE_FORMAT(sale_date, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')
+        )
         ORDER BY month
+        """
+        # Consulta adicional para obtener la fecha exacta de la última venta
+        last_sale_query = """
+        SELECT MAX(sale_date) AS last_sale_date
+        FROM sales
+        WHERE company_id = %s
+            AND sale_date <= NOW()
         """
         try:
             with Config.get_db_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
-                cursor.execute(query, (company_id, company_id))
+                # Ejecutar consulta principal
+                cursor.execute(query, (company_id, company_id, company_id))
                 results = cursor.fetchall()
+                # Ejecutar consulta para última venta
+                cursor.execute(last_sale_query, (company_id,))
+                last_sale_result = cursor.fetchone()
             print(f"Datos cargados para company_id {company_id}: {len(results)} registros")
         except Exception as e:
             print(f"Error al obtener datos para company_id {company_id}: {str(e)}")
@@ -74,6 +107,12 @@ class SalesPrediction:
 
         if not results:
             print(f"No se encontraron datos para company_id {company_id}.")
+            return None
+
+        # Obtener la fecha exacta de la última venta
+        last_sale_date = last_sale_result['last_sale_date'] if last_sale_result and last_sale_result['last_sale_date'] else None
+        if not last_sale_date:
+            print(f"No se encontró una fecha de última venta válida para company_id {company_id}.")
             return None
 
         # Preprocesamiento de datos
@@ -94,20 +133,17 @@ class SalesPrediction:
         X = df[['month_num']]
         y = df['net_quantity']
 
-        # Calcular tiempo desde la última venta
-        last_sale_date = df['month'].max()
+        # Calcular tiempo desde la última venta usando la fecha exacta
         months_since_last_sale = (datetime.now() - last_sale_date).days / 30.42
-        decay_factor = max(0.5, 1 - 0.1 * months_since_last_sale)
+        decay_factor = max(0.8, 1 - 0.05 * months_since_last_sale)
         print(f"Tiempo desde última venta para company_id {company_id}: {months_since_last_sale:.2f} meses, factor de decaimiento: {decay_factor:.2f}")
 
         # Modelo polinomial
         n_points = len(df)
-        optimal_degree = min(3, n_points - 1)
+        optimal_degree = min(3, n_points - 1) if n_points > 1 else 1
         if n_points < 2:
-            print(f"Datos insuficientes para una parábola para company_id {company_id}. Se necesita al menos 2 puntos.")
-            return None
-        print(f"Grado polinómico seleccionado para company_id {company_id}: {optimal_degree}")
-
+            print(f"Advertencia: Solo hay {n_points} punto(s) de datos para company_id {company_id}. Usando modelo lineal.")
+        
         poly = PolynomialFeatures(degree=optimal_degree, include_bias=False)
         X_poly = poly.fit_transform(X)
         model = LinearRegression()

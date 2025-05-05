@@ -189,11 +189,11 @@ def check_user_status():
 
     if request.endpoint in admin_routes and role != 'admin':
         return app.forbidden_error()
-    if request.endpoint in product_routes and role not in ['encargado de almacén', 'gerente', 'admin']:
+    if request.endpoint in product_routes and role not in ['gerente', 'admin']:
         return app.forbidden_error()
     if request.endpoint in stats_routes and role not in ['gerente', 'admin']:
         return app.forbidden_error()
-    if request.endpoint in inventory_routes and role not in ['vendedor', 'encargado de almacén', 'gerente', 'admin']:
+    if request.endpoint in inventory_routes and role not in ['vendedor', 'gerente', 'admin']:
         return app.forbidden_error()
 
     # Rutas de ventas no necesitan restricción adicional más allá de autenticación
@@ -205,7 +205,7 @@ def check_user_status():
         if role == 'vendedor':
             return redirect(url_for('inventory'))
         elif role == 'encargado de almacén':
-            return redirect(url_for('product_list'))
+            return redirect(url_for('order_list'))
         elif role == 'gerente':
             return redirect(url_for('statistics'))
         elif role == 'admin':
