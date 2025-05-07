@@ -23,20 +23,21 @@ StockBeam es una solución integral para la gestión de inventarios, diseñada e
 ## 🛠️ Instalación
 
 1. Clona este repositorio:
+
    ```bash
-   git clone https://github.com/tu_usuario/stockbeam.git
+   git clone https://github.com/notgaabo/Proyecto-Inventario-con-QR-code
    cd stockbeam
    ```
-
 2. Configura el entorno e instala dependencias:
+
    ```bash
    pip install -r requirements.txt
    ```
-
 3. Crea tu base de datos `stockbeam` e importa las tablas necesarias (`users`, `products`, `sales`, `roles`, etc.).
-
 4. Configura tu archivo de conexión en `db/config.py`:
+
    ```python
+
    db = mysql.connector.connect(
        host="localhost",
        user="tu_usuario",
@@ -44,8 +45,8 @@ StockBeam es una solución integral para la gestión de inventarios, diseñada e
        database="stockbeam"
    )
    ```
-
 5. Ejecuta el servidor:
+
    ```bash
    python app.py
    ```
@@ -56,26 +57,10 @@ StockBeam es una solución integral para la gestión de inventarios, diseñada e
 - Ingresa la URL en tu navegador.
 - Introduce tu usuario y contraseña.
 
-## 🧭 Estructura del Proyecto
-
-```
-stockbeam/
-├── app.py
-├── auth/
-├── controllers/
-├── db/
-│   └── config.py
-├── routes/
-├── templates/
-│   ├── admin/
-│   ├── includes/
-│   └── user/
-└── static/
-```
-
 ## 📚 Manual de Usuario
 
 Puedes encontrar una guía completa sobre el uso del sistema en el documento `manual.docx`, donde se explica cómo:
+
 - Registrar ventas
 - Manejar devoluciones
 - Visualizar reportes

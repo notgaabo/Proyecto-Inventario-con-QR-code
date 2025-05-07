@@ -354,44 +354,4 @@ class OrderController:
                     return orders
         except Exception as e:
             flash(f"Error al cargar órdenes pendientes: {str(e)}", "error")
-            return []
-
-    @staticmethod
-    def get_order_details(order_id):
-        """Devuelve los detalles de una orden en formato JSON para AJAX."""
-        if 'user' not in session:
-            return jsonify({"success": False, "message": "No autenticado"}), 401
-
-        company_id = session['user'].get('company_id')
-        try:
-            with db.get_db_connection() as connection:
-                with connection.cursor(dictionary=True) as cursor:
-                    cursor.execute(
-                        "SELECT id, status FROM orders WHERE id = %s AND company_id = %s",
-                        (order_id, company_id)
-                    )
-                    order = cursor.fetchone()
-                    if not order or order['status'] not in ['pending', 'in_transit']:
-                        return jsonify({"success": False, "message": "Orden no encontrada o no está pendiente/en tránsito"})
-
-                    cursor.execute(
-                        """SELECT oi.product_id, oi.quantity, p.name AS product_name 
-                        FROM order_items oi 
-                        JOIN products p ON oi.product_id = p.id 
-                        WHERE oi.order_id = %s""",
-                        (order_id,)
-                    )
-                    items = cursor.fetchall() or []
-
-                    return jsonify({
-                        "success": True,
-                        "order": {
-                            "id": order['id'],
-                            "status": order['status'],
-                            "items": items
-                        }
-                    })
-        except Exception as e:
-            return jsonify({"success": False, "message": f"Error al obtener detalles: {str(e)}"}), 500
-
-            
+            return []           

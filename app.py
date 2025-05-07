@@ -88,7 +88,6 @@ class InventoryApp(Flask):
         self.add_url_rule('/orders', 'order_list', OrderController.order_list, methods=['GET'])
         self.add_url_rule('/orders/receive_multiple', 'receive_multiple_orders', OrderController.receive_multiple_orders, methods=['POST'])
         self.add_url_rule('/orders/<int:order_id>', 'view_order', OrderController.view_order, methods=['GET'])
-        self.add_url_rule('/get_order_details/<int:order_id>', 'get_order_details', OrderController.get_order_details, methods=['GET'])
         self.add_url_rule('/receive_order', 'receive_order', OrderController.receive_order, methods=['GET', 'POST'])
         
         # Rutas de ventas (todos los roles autenticados)
