@@ -1,17 +1,20 @@
+import os
 import plotly.graph_objs as go
 import plotly.io as pio
-from flask import render_template, session, redirect, url_for, abort, jsonify, request
+from flask import Flask, render_template, session, redirect, url_for, jsonify, request, send_from_directory
 from db.config import Config
 from datetime import datetime, timedelta
-from controllers.sales_prediction import SalesPrediction  # Import from controllers directory
+from controllers.sales_prediction import SalesPrediction
 
 class StatisticsController:
     @staticmethod
     def statistics():
         if 'user' not in session:
+            print("No user in session, redirecting to login")
             return redirect(url_for('login'))
 
         if session['user']['role'] != 'gerente':
+            print("User role is not gerente, redirecting to forbidden_error")
             return redirect(url_for('forbidden_error'))
 
         stats = StatisticsController.get_sales_data()
@@ -20,6 +23,11 @@ class StatisticsController:
 
         sales_pred = SalesPrediction()
         prediction_img_path = sales_pred.get_sales_prediction()
+
+        # Manejar caso en que no se pueda generar la predicción
+        if prediction_img_path is None:
+            print("No prediction image generated, setting empty path")
+            prediction_img_path = ""
 
         return render_template(
             "user/statistics.html",
@@ -33,6 +41,7 @@ class StatisticsController:
     def get_sales_data():
         """Retrieve sales statistics by period from the database."""
         if 'user' not in session:
+            print("No user in session for get_sales_data")
             return {
                 "total_sales": 0,
                 "total_transactions": 0,
@@ -180,6 +189,7 @@ class StatisticsController:
     def get_top_products(period='month'):
         """Retrieve the top-selling products based on a time period."""
         if 'user' not in session:
+            print("No user in session for get_top_products")
             return []
 
         company_id = session['user']['company_id']
@@ -224,10 +234,11 @@ class StatisticsController:
     def filter_sales():
         """Endpoint to filter top-selling products by period."""
         if 'user' not in session:
+            print("No user in session for filter_sales")
             return redirect(url_for('login'))
 
-        # Restrict access to managers only
         if session['user']['role'] != 'gerente':
+            print("User role is not gerente for filter_sales")
             return redirect(url_for('forbidden_error'))
 
         period = request.args.get('period', 'month')

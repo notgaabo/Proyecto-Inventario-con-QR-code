@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutModal = document.getElementById('checkout-modal');
     const cartContainer = document.getElementById('cart_items');
     const cartTotalElement = document.getElementById('cart_total');
-    const paymentMethodSelect = document.getElementById('payment_method');
-    const transferForm = document.getElementById('transfer_form');
-    const stripeForm = document.getElementById('stripe_form');
+    const transferForm = document.getElementById('transfer');
+    const stripeForm = document.getElementById('stripe');
 
     let stripe = null;
     let elements = null;
@@ -15,8 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('sales.js cargado correctamente');
 
     const initializeStripe = () => {
-        if (!stripe) {
-            stripe = Stripe(stripePublicKey); // Asegúrate de definir stripePublicKey en tu HTML
+        if (!stripe && stripePublicKey) {
+            if (typeof Stripe === 'undefined') {
+                console.error('Stripe library not loaded.');
+                alert('Error: No se pudo cargar Stripe.');
+                return;
+            }
+            stripe = Stripe(stripePublicKey);
             elements = stripe.elements();
             card = elements.create('card', {
                 style: {
@@ -37,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayError.textContent = event.error ? event.error.message : '';
             });
             console.log('Stripe inicializado');
+        } else if (!stripePublicKey) {
+            console.error('stripePublicKey is undefined.');
         }
     };
 
@@ -51,22 +57,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    paymentMethodSelect.addEventListener('change', (e) => {
-        transferForm.classList.add('hidden');
-        stripeForm.classList.add('hidden');
-        destroyStripe();
-        if (e.target.value === 'transfer') {
-            transferForm.classList.remove('hidden');
-        } else if (e.target.value === 'stripe') {
-            stripeForm.classList.remove('hidden');
-            initializeStripe();
+    const getActivePaymentMethod = () => {
+        if (!document.getElementById('cash').classList.contains('hidden')) {
+            return 'cash';
+        } else if (!document.getElementById('transfer').classList.contains('hidden')) {
+            return 'transfer';
+        } else if (!document.getElementById('stripe').classList.contains('hidden')) {
+            return 'stripe';
         }
-        console.log('Método de pago cambiado a:', e.target.value);
+        return null;
+    };
+
+    // Initialize Stripe when Stripe tab is selected
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            if (tabId === 'stripe' && !card) {
+                initializeStripe();
+            } else if (tabId !== 'stripe' && card) {
+                destroyStripe();
+            }
+        });
     });
 
     const calculateItemTotal = (price, quantity) => {
         const subtotal = (Number(price) || 0) * (Number(quantity) || 0);
-        const itbisRate = 0.18; // 18% ITBIS
+        const itbisRate = 0.18;
         const itbis = subtotal * itbisRate;
         const total = subtotal + itbis;
         return { subtotal, itbis, total };
@@ -172,10 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (confirmCheckoutBtn) {
         confirmCheckoutBtn.addEventListener('click', async () => {
-            const paymentMethod = paymentMethodSelect.value;
+            const paymentMethod = getActivePaymentMethod();
             const totalAmount = updateCartTotal();
 
             console.log('Botón Confirmar Pago clicado, método:', paymentMethod, 'total:', totalAmount);
+
+            if (!paymentMethod) {
+                alert('Por favor, selecciona un método de pago.');
+                return;
+            }
 
             if (totalAmount <= 0) {
                 alert('El total debe ser mayor que cero para proceder con el pago.');
@@ -205,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!itemsToSend.length) {
                 alert('No hay productos válidos para registrar.');
                 return;
-leo            }
+            }
 
             let payload = { 
                 items: itemsToSend, 
@@ -229,14 +251,13 @@ leo            }
                     console.log('Token de Stripe generado:', token.id);
                 } else if (paymentMethod === 'transfer') {
                     const transferData = {
-                        account_number: document.getElementById('account_number').value,
-                        bank_name: document.getElementById('bank_name').value,
-                        transfer_date: document.getElementById('transfer_date').value,
-                        reference_number: document.getElementById('reference_number').value
+                        account_number: document.getElementById('account_number')?.value || '',
+                        bank_name: document.getElementById('bank_name')?.value || '',
+                        transfer_date: document.getElementById('transfer_date')?.value || '',
+                        reference_number: document.getElementById('reference_number')?.value || ''
                     };
                     
-                    if (!transferData.account_number || !transferData.bank_name || 
-                        !transferData.transfer_date || !transferData.reference_number) {
+                    if (Object.values(transferData).some(val => !val)) {
                         alert('Por favor, completa todos los campos de transferencia.');
                         return;
                     }
@@ -267,7 +288,6 @@ leo            }
                     clearCart();
                     alert('Venta registrada con éxito');
 
-                    // Close the modal manually
                     const modalElement = document.getElementById('checkout-modal');
                     if (modalElement) {
                         modalElement.classList.add('hidden');
@@ -276,15 +296,14 @@ leo            }
                         console.warn('Modal element not found');
                     }
 
-                    // Trigger PDF download with all sale_ids
                     if (data.sale_ids && data.sale_ids.length > 0) {
                         const saleIdsParam = data.sale_ids.join(',');
                         const invoiceUrl = `/factura?ids=${saleIdsParam}`;
-                        console.log('Generando descarga de factura con todos los IDs:', invoiceUrl)
+                        console.log('Generando descarga de factura con todos los IDs:', invoiceUrl);
 
                         const link = document.createElement('a');
                         link.href = invoiceUrl;
-                        link.download = `factura_${data.sale_ids[0]}.pdf`; // Nombre basado en el primer ID
+                        link.download = `factura_${data.sale_ids[0]}.pdf`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -317,4 +336,4 @@ leo            }
 
     document.addEventListener('cartUpdated', updateCartTotal);
     updateCartTotal();
-});
+}); 

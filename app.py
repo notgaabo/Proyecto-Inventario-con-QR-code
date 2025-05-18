@@ -117,7 +117,7 @@ class InventoryApp(Flask):
 
         # Notificaciones
         self.add_url_rule('/notifications', 'get_notifications_route', NotificationsController.get_notifications, methods=['GET'])
-        self.add_url_rule('/notifications/<int:notification_id>/read', 'mark_notification_as_read_route', NotificationsController.mark_notification_as_read, methods=['POST'])
+        self.add_url_rule('/notifications/<notification_id>/read', 'mark_notification_as_read_route', NotificationsController.mark_notification_as_read, methods=['POST'])
 
         # Gestión de empresas (solo admin)  
         self.add_url_rule('/manage_companies', 'manage_companies', CompanyController.manage_companies, methods=['GET'])
