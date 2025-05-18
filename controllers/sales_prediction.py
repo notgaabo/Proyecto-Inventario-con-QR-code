@@ -54,16 +54,13 @@ class SalesPrediction:
                         'quantity_sales': 0,
                         'quantity_returns': 0
                     })
-            print(f"Datos cargados para company_id {company_id}: {len(results)} registros - {results}")
             return results, last_sale_result
         except Exception as e:
-            print(f"Error al obtener datos para company_id {company_id}: {str(e)}")
             return None, None
 
     @staticmethod
     def train_model(df, last_sale_date):
         if df.empty or not last_sale_date:
-            print(f"No hay datos válidos para entrenar el modelo. df: {df.empty}, last_sale_date: {last_sale_date}")
             return None, None, None, None, None, None, None
 
         # Crear una copia explícita para evitar problemas con vistas
@@ -80,24 +77,19 @@ class SalesPrediction:
         
         # Verificar si el DataFrame está vacío después de filtrar
         if df.empty:
-            print(f"No hay datos de ventas netas válidos después de filtrar. df: {df}")
             return None, None, None, None, None, None, None
 
         # Añadir month_num usando .loc para evitar SettingWithCopyWarning
         df.loc[:, 'month_num'] = np.arange(len(df))
-        print(f"Datos procesados para company_id {session.get('user', {}).get('company_id', 'unknown')}: {len(df)} meses - {df.head()}")
 
         X = df[['month_num']]
         y = df['net_quantity']
 
         months_since_last_sale = (datetime.now() - last_sale_date).days / 30.42
         decay_factor = max(0.8, 1 - 0.05 * months_since_last_sale)
-        print(f"Tiempo desde última venta: {months_since_last_sale:.2f} meses, factor de decaimiento: {decay_factor:.2f}")
 
         n_points = len(df)
         optimal_degree = min(3, n_points - 1) if n_points > 1 else 1
-        if n_points < 2:
-            print(f"Advertencia: Solo hay {n_points} punto(s) de datos. Usando modelo lineal.")
         
         poly = PolynomialFeatures(degree=optimal_degree, include_bias=False)
         X_poly = poly.fit_transform(X)
@@ -107,14 +99,12 @@ class SalesPrediction:
         y_pred = model.predict(X_poly)
         mse = np.mean((y - y_pred) ** 2)
         r2 = model.score(X_poly, y)
-        print(f"Modelo entrenado - MSE: {mse:.2f}, R²: {r2:.4f}")
 
         next_index = len(df)
         X_future = np.array([[next_index]])
         X_future_poly = poly.transform(X_future)
         predicted = max(0, model.predict(X_future_poly)[0] * decay_factor)
         next_month = df['month'].iloc[-1] + pd.offsets.MonthBegin(1)
-        print(f"Predicción para {next_month.strftime('%Y-%m')}: {predicted:.2f} (con decaimiento)")
 
         return df, model, poly, predicted, next_month, decay_factor, next_index
 
@@ -123,7 +113,6 @@ class SalesPrediction:
         # Verificar que las columnas necesarias existan
         required_columns = ['month_num', 'net_quantity', 'month']
         if not all(col in df.columns for col in required_columns):
-            print(f"Error: Faltan columnas en el DataFrame. Columnas actuales: {df.columns.tolist()}")
             return False
 
         plt.figure(figsize=(14, 8))
@@ -198,11 +187,9 @@ class SalesPrediction:
         plt.tight_layout()
         try:
             plt.savefig(image_path, dpi=300, bbox_inches='tight')
-            print(f"Imagen guardada exitosamente en: {image_path}")
             plt.close()
             return True
         except Exception as e:
-            print(f"Error al guardar la imagen en {image_path}: {str(e)}")
             plt.close()
             return False
 
@@ -214,56 +201,43 @@ class SalesPrediction:
 
         if not os.path.exists(static_folder):
             os.makedirs(static_folder)
-            print(f"Carpeta '{static_folder}' creada")
 
         if os.path.exists(image_path):
             file_age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(image_path))
             if file_age < timedelta(minutes=5):
-                print(f"Imagen reciente encontrada: {image_name}")
                 return image_name
 
         try:
             if 'user' not in session:
-                print("Error: No se encontró 'user' en la sesión.")
                 return None
             user = session['user']
             if not isinstance(user, dict) or 'company_id' not in user:
-                print("Error: 'company_id' no está presente en session['user'].")
                 return None
             company_id = user['company_id']
             if not isinstance(company_id, int) or company_id <= 0:
-                print(f"Error: 'company_id' inválido en session['user']: {company_id}")
                 return None
-            print(f"company_id obtenido de la sesión: {company_id}")
         except Exception as e:
-            print(f"Error al acceder a la sesión: {str(e)}")
             return None
 
         session.pop('cached_sales_data', None)
 
         results, last_sale_result = SalesPrediction.fetch_sales_data(company_id)
         if not results or not last_sale_result:
-            print(f"No se encontraron datos válidos para company_id {company_id}. Results: {results}, Last sale: {last_sale_result}")
             return None
 
         last_sale_date = last_sale_result['last_sale_date'] if last_sale_result and last_sale_result['last_sale_date'] else None
         if not last_sale_date:
-            print(f"No se encontró una fecha de última venta válida para company_id {company_id}.")
             return None
 
         df = pd.DataFrame(results)
-        print(f"DataFrame inicial: {df}")
         result = SalesPrediction.train_model(df, last_sale_date)
         if result is None:
-            print(f"No se pudo entrenar el modelo para company_id {company_id}.")
             return None
 
         df, model, poly, predicted, next_month, decay_factor, next_index = result
-        print(f"DataFrame después de train_model: {df}")
 
         success = SalesPrediction.generate_plot(df, model, poly, predicted, next_month, decay_factor, next_index, image_path)
         if not success:
-            print(f"No se pudo generar la imagen para company_id {company_id}.")
             return None
 
         return image_name
